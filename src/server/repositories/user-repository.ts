@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/db";
 
 export interface UserRecord {
   id: string;
@@ -10,40 +11,41 @@ export interface UserRecord {
   updatedAt: Date;
 }
 
-// In-memory data store for Phase 2 authentication validation (swaps to Prisma in Phase 3)
-const globalUsers = globalThis as unknown as { __learntrack_users?: Map<string, UserRecord> };
-if (!globalUsers.__learntrack_users) {
-  globalUsers.__learntrack_users = new Map<string, UserRecord>();
-
-  // Pre-seed default test learner account
-  const defaultSalt = bcrypt.genSaltSync(10);
-  const defaultHash = bcrypt.hashSync("Password123!", defaultSalt);
-
-  const demoUser: UserRecord = {
-    id: "usr_demo_learner_01",
-    name: "Alex Learner",
-    email: "demo@learntrack.app",
-    passwordHash: defaultHash,
-    timezone: "UTC",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  globalUsers.__learntrack_users.set(demoUser.email.toLowerCase(), demoUser);
-}
-
-const users = globalUsers.__learntrack_users;
-
 export async function findUserByEmail(email: string): Promise<UserRecord | null> {
   const normalized = email.trim().toLowerCase();
-  return users.get(normalized) ?? null;
+  const user = await prisma.user.findUnique({
+    where: { email: normalized },
+  });
+
+  if (!user || !user.passwordHash) return null;
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    passwordHash: user.passwordHash,
+    timezone: user.timezone,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
 }
 
 export async function findUserById(id: string): Promise<UserRecord | null> {
-  for (const user of Array.from(users.values())) {
-    if (user.id === id) return user;
-  }
-  return null;
+  const user = await prisma.user.findUnique({
+    where: { id },
+  });
+
+  if (!user || !user.passwordHash) return null;
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    passwordHash: user.passwordHash,
+    timezone: user.timezone,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
 }
 
 export async function createUser(data: {
@@ -53,23 +55,42 @@ export async function createUser(data: {
   timezone?: string;
 }): Promise<UserRecord> {
   const normalized = data.email.trim().toLowerCase();
-  if (users.has(normalized)) {
+
+  const existing = await prisma.user.findUnique({
+    where: { email: normalized },
+  });
+
+  if (existing) {
     throw new Error("A user with this email address already exists.");
   }
 
-  const id = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-  const newUser: UserRecord = {
-    id,
-    name: data.name.trim(),
-    email: normalized,
-    passwordHash: data.passwordHash,
-    timezone: data.timezone ?? "UTC",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  const newUser = await prisma.user.create({
+    data: {
+      name: data.name.trim(),
+      email: normalized,
+      passwordHash: data.passwordHash,
+      timezone: data.timezone ?? "UTC",
+      settings: {
+        create: {
+          defaultFocusDuration: 2700,
+          soundEnabled: true,
+          soundVolume: 0.8,
+          soundChoice: "bell",
+          notificationsEnabled: true,
+        },
+      },
+    },
+  });
 
-  users.set(normalized, newUser);
-  return newUser;
+  return {
+    id: newUser.id,
+    name: newUser.name,
+    email: newUser.email,
+    passwordHash: newUser.passwordHash ?? data.passwordHash,
+    timezone: newUser.timezone,
+    createdAt: newUser.createdAt,
+    updatedAt: newUser.updatedAt,
+  };
 }
 
 export async function hashPassword(password: string): Promise<string> {
