@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   const todayStr = getTodayISO();
   const summary = await getDailyTaskSummary(userId, todayStr);
 
-  const priorityBorders = {
+  const priorityBorders: Record<string, string> = {
     HIGH: "border-l-4 border-l-red-500",
     MEDIUM: "border-l-4 border-l-amber-500",
     LOW: "border-l-4 border-l-slate-400",

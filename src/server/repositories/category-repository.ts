@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import type { Category } from "@prisma/client";
+import type { Category } from "@/types";
 
 /**
  * Retrieves all categories belonging strictly to the specified user.

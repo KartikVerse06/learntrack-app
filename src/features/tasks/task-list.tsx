@@ -7,7 +7,7 @@ import { TaskCard } from "@/features/tasks/task-card";
 import { TaskFormDialog } from "@/features/tasks/task-form-dialog";
 import { DeleteTaskDialog } from "@/features/tasks/delete-task-dialog";
 import type { TaskWithCategory } from "@/server/repositories/learning-task-repository";
-import type { Category } from "@prisma/client";
+import type { Category } from "@/types";
 
 interface TaskListProps {
   tasks: TaskWithCategory[];

@@ -26,6 +26,37 @@ export type RevisionStatus =
   | "OVERDUE"
   | "SKIPPED";
 
+export interface Category {
+  id: string;
+  userId: string;
+  name: string;
+  color: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface LearningTask {
+  id: string;
+  userId: string;
+  categoryId: string | null;
+  title: string;
+  description: string | null;
+  plannedDate: Date;
+  priority: Priority;
+  estimatedSessions: number;
+  completedSessions: number;
+  totalFocusMinutes: number;
+  status: TaskStatus;
+  learningCompletedAt: Date | null;
+  fullyCompletedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type TaskWithCategory = LearningTask & {
+  category: Category | null;
+};
+
 /**
  * Standardized Server Action Result Envelope
  */

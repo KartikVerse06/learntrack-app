@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { moveTaskToTomorrowAction } from "@/server/actions/task-actions";
 import { formatDateToISO } from "@/lib/date-utils";
-import type { TaskWithCategory } from "@/server/repositories/learning-task-repository";
+import type { TaskWithCategory } from "@/types";
 
 interface TaskCardProps {
   task: TaskWithCategory;
@@ -33,13 +33,13 @@ interface TaskCardProps {
 export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
   const [isMoving, setIsMoving] = useState(false);
 
-  const priorityBorders = {
+  const priorityBorders: Record<string, string> = {
     HIGH: "border-l-4 border-l-red-500",
     MEDIUM: "border-l-4 border-l-amber-500",
     LOW: "border-l-4 border-l-slate-400",
   };
 
-  const priorityLabels = {
+  const priorityLabels: Record<string, string> = {
     HIGH: "High Priority",
     MEDIUM: "Medium Priority",
     LOW: "Low Priority",

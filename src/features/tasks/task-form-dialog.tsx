@@ -20,7 +20,7 @@ import {
   updateTaskAction,
 } from "@/server/actions/task-actions";
 import type { TaskWithCategory } from "@/server/repositories/learning-task-repository";
-import type { Category } from "@prisma/client";
+import type { Category } from "@/types";
 
 interface TaskFormValues {
   title: string;

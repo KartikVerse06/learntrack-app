@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/db";
 import { parseISODate } from "@/lib/date-utils";
-import type { LearningTask, Category, Priority, TaskStatus } from "@prisma/client";
+import type {
+  LearningTask,
+  Category,
+  Priority,
+  TaskStatus,
+  TaskWithCategory,
+} from "@/types";
 
-export type TaskWithCategory = LearningTask & {
-  category: Category | null;
-};
+export type { TaskWithCategory };
 
 export interface DailyTaskSummary {
   totalTasks: number;
