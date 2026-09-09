@@ -1,7 +1,16 @@
-import { Flame, User } from "lucide-react";
+import { Flame } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { UserMenu } from "@/components/common/user-menu";
 
-export function Header() {
+interface HeaderProps {
+  user?: {
+    id?: string;
+    name?: string | null;
+    email?: string | null;
+  } | null;
+}
+
+export function Header({ user }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background/95 px-4 md:px-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex items-center gap-3">
@@ -20,10 +29,8 @@ export function Header() {
           <span>Consistency Streak: 0 Days</span>
         </Badge>
 
-        {/* User Profile Avatar Placeholder */}
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary border border-border text-foreground font-medium text-xs">
-          <User className="h-4 w-4 text-muted-foreground" />
-        </div>
+        {/* Authenticated User Menu */}
+        <UserMenu user={user} />
       </div>
     </header>
   );
