@@ -6,6 +6,7 @@ export default defineConfig({
     globals: true,
     environment: "node",
     testTimeout: 15000,
+    exclude: ["**/node_modules/**", "**/tests/e2e/**"],
   },
   resolve: {
     alias: {

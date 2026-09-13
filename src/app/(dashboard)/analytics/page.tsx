@@ -1,51 +1,57 @@
-import { BarChart3, Flame } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import dynamic from "next/dynamic";
+import { requireAuth } from "@/lib/session";
+import { getFullAnalyticsPayload } from "@/server/repositories/analytics-repository";
+import { Loader2, BarChart3 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
-export default function AnalyticsPage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-primary" />
-            <span>Learning Analytics & Retention</span>
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Track daily study hours, revision adherence, confidence curves, and verified practice streaks.
-          </p>
+// Dynamically import AnalyticsClient with SSR disabled to prevent Recharts SVG ResponsiveContainer hydration errors
+const AnalyticsClient = dynamic(
+  () =>
+    import("@/features/analytics/analytics-client").then(
+      (mod) => mod.AnalyticsClient
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-6 animate-pulse">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b">
+          <div className="space-y-2 max-w-full">
+            <div className="h-7 w-48 sm:w-64 bg-muted rounded-md max-w-full" />
+            <div className="h-4 w-60 sm:w-80 bg-muted/60 rounded-md max-w-full" />
+          </div>
+          <div className="h-8 w-40 sm:w-60 bg-muted rounded-md max-w-full" />
         </div>
-        <Badge variant="outline" className="gap-1.5 py-1 px-3 border-amber-300 bg-amber-50 text-amber-800">
-          <Flame className="h-4 w-4 text-amber-500 fill-amber-500" />
-          <span>Qualifying Day: &gt;= 45m Focus or 1 Revision</span>
-        </Badge>
-      </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Focus Hours Trajectory</CardTitle>
-            <CardDescription>Daily study time over last 30 days</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="py-16 text-center text-muted-foreground text-sm border border-dashed rounded-lg">
-              Recharts bar chart integration will render here in Phase 9.
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="shadow-sm">
+              <CardContent className="p-4 space-y-2">
+                <div className="h-3 w-16 bg-muted rounded" />
+                <div className="h-7 w-20 bg-muted rounded" />
+                <div className="h-3 w-24 bg-muted/60 rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Confidence & Retention Curve</CardTitle>
-            <CardDescription>Average confidence score progression across Revisions 1..4</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="py-16 text-center text-muted-foreground text-sm border border-dashed rounded-lg">
-              Retention trajectory visualization will render here in Phase 9.
+        <Card className="shadow-sm">
+          <CardContent className="h-[300px] flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2 text-muted-foreground text-sm">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span>Loading learning analytics...</span>
             </div>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    ),
+  }
+);
+
+export default async function AnalyticsPage() {
+  const { userId } = await requireAuth();
+
+  // Load initial 30-day analytics payload server-side
+  const initialPayload = await getFullAnalyticsPayload(userId, "30d", "UTC");
+
+  return <AnalyticsClient initialPayload={initialPayload} userTimezone="UTC" />;
 }

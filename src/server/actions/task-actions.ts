@@ -5,15 +5,19 @@ import { requireAuth } from "@/lib/session";
 import {
   CreateTaskSchema,
   UpdateTaskSchema,
+  ToggleTaskStatusSchema,
   type CreateTaskInput,
   type UpdateTaskInput,
+  type ToggleTaskStatusInput,
 } from "@/server/validators/task";
 import {
   createLearningTask,
   updateLearningTask,
   deleteLearningTask,
   getTaskById,
+  getTaskDetailsById,
   type TaskWithCategory,
+  type TaskWithDetails,
 } from "@/server/repositories/learning-task-repository";
 import { getRelativeDateISO } from "@/lib/date-utils";
 import type { ActionResult } from "@/types";
@@ -112,6 +116,7 @@ export async function updateTaskAction(
 
     revalidatePath("/planner");
     revalidatePath("/dashboard");
+    revalidatePath(`/tasks/${id}`);
 
     return {
       success: true,
@@ -149,6 +154,7 @@ export async function deleteTaskAction(
 
     revalidatePath("/planner");
     revalidatePath("/dashboard");
+    revalidatePath(`/tasks/${taskId}`);
 
     return {
       success: true,
@@ -192,6 +198,7 @@ export async function moveTaskToTomorrowAction(
 
     revalidatePath("/planner");
     revalidatePath("/dashboard");
+    revalidatePath(`/tasks/${taskId}`);
 
     return {
       success: true,
@@ -208,3 +215,97 @@ export async function moveTaskToTomorrowAction(
     };
   }
 }
+
+export async function toggleTaskStatusAction(
+  rawInput: ToggleTaskStatusInput
+): Promise<ActionResult<TaskWithCategory>> {
+  try {
+    const { userId } = await requireAuth();
+
+    const parseResult = ToggleTaskStatusSchema.safeParse(rawInput);
+    if (!parseResult.success) {
+      return {
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid status update payload.",
+        },
+      };
+    }
+
+    const { id, status } = parseResult.data;
+
+    const task = await updateLearningTask(userId, id, {
+      status,
+    });
+
+    revalidatePath("/planner");
+    revalidatePath("/dashboard");
+    revalidatePath(`/tasks/${id}`);
+
+    return {
+      success: true,
+      data: task,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update task status.";
+    return {
+      success: false,
+      error: {
+        code: "UPDATE_STATUS_FAILED",
+        message,
+      },
+    };
+  }
+}
+
+export async function getTaskDetailsAction(
+  taskId: string
+): Promise<ActionResult<TaskWithDetails>> {
+  try {
+    const { userId } = await requireAuth();
+
+    if (!taskId || typeof taskId !== "string") {
+      return {
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid task ID.",
+        },
+      };
+    }
+
+    const task = await getTaskDetailsById(userId, taskId);
+    if (!task) {
+      return {
+        success: false,
+        error: {
+          code: "NOT_FOUND",
+          message: "Learning task not found or access denied.",
+        },
+      };
+    }
+
+    return {
+      success: true,
+      data: task,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to retrieve task details.";
+    return {
+      success: false,
+      error: {
+        code: "GET_TASK_DETAILS_FAILED",
+        message,
+      },
+    };
+  }
+}
+
+// Aliases matching standard specification naming
+export const createTask = createTaskAction;
+export const updateTask = updateTaskAction;
+export const deleteTask = deleteTaskAction;
+export const moveTaskToTomorrow = moveTaskToTomorrowAction;
+export const toggleTaskStatus = toggleTaskStatusAction;
+export const getTaskDetails = getTaskDetailsAction;

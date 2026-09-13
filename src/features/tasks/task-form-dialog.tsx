@@ -19,6 +19,7 @@ import {
   createTaskAction,
   updateTaskAction,
 } from "@/server/actions/task-actions";
+import { formatDateToISO } from "@/lib/date-utils";
 import type { TaskWithCategory } from "@/server/repositories/learning-task-repository";
 import type { Category } from "@/types";
 
@@ -29,6 +30,7 @@ interface TaskFormValues {
   plannedDate: string;
   priority: "LOW" | "MEDIUM" | "HIGH";
   estimatedSessions: number;
+  status?: "PLANNED" | "IN_PROGRESS";
 }
 
 interface TaskFormDialogProps {
@@ -74,10 +76,11 @@ export function TaskFormDialog({
         description: taskToEdit.description || "",
         categoryId: taskToEdit.categoryId || "",
         plannedDate: taskToEdit.plannedDate
-          ? new Date(taskToEdit.plannedDate).toISOString().split("T")[0]
+          ? formatDateToISO(new Date(taskToEdit.plannedDate))
           : defaultDate,
         priority: taskToEdit.priority,
         estimatedSessions: taskToEdit.estimatedSessions,
+        status: (taskToEdit.status === "IN_PROGRESS" ? "IN_PROGRESS" : "PLANNED") as "PLANNED" | "IN_PROGRESS",
       });
     } else {
       reset({
@@ -87,6 +90,7 @@ export function TaskFormDialog({
         plannedDate: defaultDate,
         priority: "MEDIUM",
         estimatedSessions: 2,
+        status: "PLANNED",
       });
     }
     setServerError(null);
@@ -108,6 +112,7 @@ export function TaskFormDialog({
         const result = await updateTaskAction({
           id: taskToEdit.id,
           ...payload,
+          status: data.status,
         });
 
         if (!result.success) {
@@ -283,6 +288,23 @@ export function TaskFormDialog({
               )}
             </div>
           </div>
+
+          {/* Status Selection (Visible in Edit Mode) */}
+          {isEditing && (
+            <div className="space-y-1.5">
+              <Label htmlFor="task-status" className="text-xs font-semibold">
+                Task Status
+              </Label>
+              <select
+                id="task-status"
+                {...register("status")}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="PLANNED">Planned</option>
+                <option value="IN_PROGRESS">In Progress</option>
+              </select>
+            </div>
+          )}
 
           <DialogFooter className="pt-3 border-t">
             <Button

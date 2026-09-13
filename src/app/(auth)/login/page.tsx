@@ -77,7 +77,13 @@ export default function LoginPage() {
           </div>
         </CardHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form
+          action="#"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit(onSubmit)(e);
+          }}
+        >
           <CardContent className="space-y-4">
             {serverError && (
               <div

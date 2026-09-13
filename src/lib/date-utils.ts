@@ -18,7 +18,17 @@ export function parseISODate(dateStr: string): Date {
   const year = parseInt(parts[0], 10);
   const month = parseInt(parts[1], 10) - 1;
   const day = parseInt(parts[2], 10);
-  return new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+
+  if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+    throw new Error(`Invalid ISO date format: ${dateStr}. Expected YYYY-MM-DD.`);
+  }
+
+  const date = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`Invalid ISO date format: ${dateStr}. Expected YYYY-MM-DD.`);
+  }
+
+  return date;
 }
 
 export function getTodayISO(timezone = "UTC"): string {

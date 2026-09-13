@@ -16,9 +16,9 @@ export default async function DashboardLayout({
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col pb-16 lg:pb-0">
+      <div className="flex flex-1 flex-col pb-20 lg:pb-0 min-w-0">
         <Header user={session?.user} />
-        <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-3 sm:p-5 lg:p-8 max-w-7xl w-full mx-auto min-w-0">
           {children}
         </main>
         {/* Mobile Bottom Navigation */}

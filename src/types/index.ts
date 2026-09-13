@@ -53,8 +53,57 @@ export interface LearningTask {
   updatedAt: Date;
 }
 
+export interface FocusSession {
+  id: string;
+  userId: string;
+  learningTaskId: string;
+  startedAt: Date;
+  endedAt: Date | null;
+  plannedDuration: number;
+  actualDuration: number;
+  pausedDuration: number;
+  status: SessionStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface LearningLog {
+  id: string;
+  userId: string;
+  learningTaskId: string;
+  focusSessionId: string;
+  whatLearned: string;
+  whatCompleted: string | null;
+  doubts: string | null;
+  notes: string | null;
+  confidence: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Revision {
+  id: string;
+  userId: string;
+  learningTaskId: string;
+  revisionNumber: number;
+  scheduledDate: Date;
+  status: RevisionStatus;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  notes: string | null;
+  confidence: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export type TaskWithCategory = LearningTask & {
   category: Category | null;
+};
+
+export type TaskWithDetails = TaskWithCategory & {
+  focusSessions: FocusSession[];
+  learningLogs: LearningLog[];
+  revisions: Revision[];
 };
 
 /**

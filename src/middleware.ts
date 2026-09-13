@@ -18,7 +18,9 @@ export default auth((req) => {
     nextUrl.pathname.startsWith("/revisions") ||
     nextUrl.pathname.startsWith("/calendar") ||
     nextUrl.pathname.startsWith("/analytics") ||
-    nextUrl.pathname.startsWith("/settings");
+    nextUrl.pathname.startsWith("/settings") ||
+    nextUrl.pathname.startsWith("/tasks") ||
+    nextUrl.pathname.startsWith("/learning-logs");
 
   if (isAuthRoute) {
     if (isAuthenticated) {

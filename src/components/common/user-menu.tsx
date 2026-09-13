@@ -43,7 +43,7 @@ export function UserMenu({ user }: UserMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 border border-primary/20 text-primary font-semibold text-xs transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full bg-primary/10 border border-primary/20 text-primary font-semibold text-xs transition-all hover:bg-primary/20 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="User profile and settings"
         >
           {initials ? <span>{initials}</span> : <User className="h-4 w-4" />}

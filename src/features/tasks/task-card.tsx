@@ -10,6 +10,10 @@ import {
   Timer,
   CheckCircle2,
   Clock,
+  Eye,
+  PlayCircle,
+  RotateCcw,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +24,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { moveTaskToTomorrowAction } from "@/server/actions/task-actions";
+import {
+  moveTaskToTomorrowAction,
+  toggleTaskStatusAction,
+} from "@/server/actions/task-actions";
 import { formatDateToISO } from "@/lib/date-utils";
 import type { TaskWithCategory } from "@/types";
 
@@ -28,10 +35,12 @@ interface TaskCardProps {
   task: TaskWithCategory;
   onEdit: (task: TaskWithCategory) => void;
   onDelete: (task: TaskWithCategory) => void;
+  onViewDetails?: (task: TaskWithCategory) => void;
 }
 
-export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete, onViewDetails }: TaskCardProps) {
   const [isMoving, setIsMoving] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
 
   const priorityBorders: Record<string, string> = {
     HIGH: "border-l-4 border-l-red-500",
@@ -68,6 +77,21 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
     }
   };
 
+  const handleToggleStatus = async () => {
+    try {
+      setIsTogglingStatus(true);
+      const nextStatus = task.status === "PLANNED" ? "IN_PROGRESS" : "PLANNED";
+      await toggleTaskStatusAction({
+        id: task.id,
+        status: nextStatus,
+      });
+    } catch (error) {
+      console.error("Failed to toggle status:", error);
+    } finally {
+      setIsTogglingStatus(false);
+    }
+  };
+
   return (
     <div
       className={`group relative rounded-xl border bg-card p-5 shadow-sm transition-all hover:shadow-md ${
@@ -93,21 +117,36 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
               variant={statusVariantMap[task.status] || "outline"}
               className="text-[11px] font-medium uppercase tracking-wider px-2 py-0.5"
             >
-              {task.status.replace("_", " ")}
+              {task.status.replace(/_/g, " ")}
             </Badge>
             <span className="text-xs text-muted-foreground font-mono">
               {priorityLabels[task.priority]}
             </span>
           </div>
 
-          <h4 className="text-base font-semibold text-foreground tracking-tight leading-snug break-words">
-            {task.title}
-          </h4>
+          <Link
+            href={`/tasks/${task.id}`}
+            className="group/title block hover:text-primary transition-colors"
+          >
+            <h4
+              className="text-base font-semibold text-foreground tracking-tight leading-snug break-words group-hover/title:text-primary transition-colors"
+              title="Click to view task details"
+            >
+              {task.title}
+            </h4>
+          </Link>
 
           {task.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-              {task.description}
-            </p>
+            <Link
+              href={`/tasks/${task.id}`}
+              className="block"
+            >
+              <p
+                className="text-xs text-muted-foreground line-clamp-2 leading-relaxed hover:text-foreground transition-colors"
+              >
+                {task.description}
+              </p>
+            </Link>
           )}
         </div>
 
@@ -123,11 +162,38 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
               <span className="sr-only">Open options</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem asChild className="gap-2 cursor-pointer">
+              <Link href={`/tasks/${task.id}`}>
+                <Eye className="h-4 w-4 text-muted-foreground" />
+                <span>View Task Details</span>
+              </Link>
+            </DropdownMenuItem>
+
+            {(task.status === "PLANNED" || task.status === "IN_PROGRESS") && (
+              <DropdownMenuItem
+                onClick={handleToggleStatus}
+                disabled={isTogglingStatus}
+                className="gap-2 cursor-pointer"
+              >
+                {isTogglingStatus ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                ) : task.status === "PLANNED" ? (
+                  <PlayCircle className="h-4 w-4 text-primary" />
+                ) : (
+                  <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span>
+                  {task.status === "PLANNED" ? "Mark as In Progress" : "Mark as Planned"}
+                </span>
+              </DropdownMenuItem>
+            )}
+
             <DropdownMenuItem onClick={() => onEdit(task)} className="gap-2 cursor-pointer">
               <Edit2 className="h-4 w-4 text-muted-foreground" />
               <span>Edit Task</span>
             </DropdownMenuItem>
+
             <DropdownMenuItem
               onClick={handleMoveTomorrow}
               disabled={isMoving}
@@ -136,7 +202,9 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span>{isMoving ? "Rescheduling..." : "Move to Tomorrow"}</span>
             </DropdownMenuItem>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuItem
               onClick={() => onDelete(task)}
               className="gap-2 text-destructive focus:text-destructive cursor-pointer"
@@ -149,17 +217,18 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
       </div>
 
       {/* Footer Strip: Focus Block Visual Tracker & Start Action */}
-      <div className="mt-4 pt-3 border-t flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-4 pt-3 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Estimated 45m Focus Session Circles */}
-        <div className="flex items-center gap-2">
+        <div
+          onClick={() => onViewDetails?.(task)}
+          className="flex items-center gap-2 cursor-pointer flex-wrap"
+          title={`${task.completedSessions} of ${task.estimatedSessions} sessions completed. Click to view.`}
+        >
           <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono">
-            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+            <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <span>45m blocks:</span>
           </span>
-          <div
-            className="flex items-center gap-1.5"
-            title={`${task.completedSessions} of ${task.estimatedSessions} sessions completed`}
-          >
+          <div className="flex items-center gap-1.5 flex-wrap">
             {Array.from({ length: task.estimatedSessions }).map((_, index) => {
               const isCompleted = index < task.completedSessions;
               return (
@@ -167,7 +236,7 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
                   key={index}
                   className={`h-3 w-3 rounded-full transition-colors ${
                     isCompleted
-                      ? "bg-emerald-500 shadow-sm shadow-emerald-500/30"
+                      ? "bg-emerald-500 shadow-xs shadow-emerald-500/30"
                       : "border-2 border-muted-foreground/30 bg-muted/40"
                   }`}
                 />
@@ -179,22 +248,36 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
           </span>
         </div>
 
-        {/* Start Focus / Resume CTA */}
-        {task.status !== "FULLY_COMPLETED" && (
-          <Button asChild size="sm" variant="focus" className="h-8 gap-1.5 text-xs">
-            <Link href={`/focus?taskId=${task.id}`}>
-              <Timer className="h-3.5 w-3.5" />
-              <span>{task.status === "IN_PROGRESS" ? "Resume Focus" : "Start Focus"}</span>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-10 min-h-[40px] gap-1.5 text-xs flex-1 sm:flex-initial justify-center"
+          >
+            <Link href={`/tasks/${task.id}`}>
+              <Eye className="h-3.5 w-3.5" />
+              <span>Details</span>
             </Link>
           </Button>
-        )}
 
-        {task.status === "FULLY_COMPLETED" && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="h-4 w-4" />
-            <span>Mastered</span>
-          </span>
-        )}
+          {task.status !== "FULLY_COMPLETED" && (
+            <Button asChild size="sm" variant="focus" className="h-10 min-h-[42px] gap-1.5 text-xs font-semibold flex-1 sm:flex-initial shadow-xs justify-center">
+              <Link href={`/focus?taskId=${task.id}`}>
+                <Timer className="h-3.5 w-3.5" />
+                <span>{task.status === "IN_PROGRESS" ? "Resume Focus" : "Start Focus"}</span>
+              </Link>
+            </Button>
+          )}
+
+          {task.status === "FULLY_COMPLETED" && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 py-1 px-2">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Mastered</span>
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

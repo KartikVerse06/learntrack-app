@@ -4,6 +4,13 @@ import { authConfig } from "@/auth.config";
 import { LoginSchema } from "@/server/validators/auth";
 import { findUserByEmail, verifyPassword } from "@/server/repositories/user-repository";
 
+const authSecret = process.env.AUTH_SECRET;
+if (!authSecret && process.env.NODE_ENV === "production") {
+  throw new Error(
+    "CRITICAL SECURITY CONFIGURATION ERROR: AUTH_SECRET must be defined in production environments."
+  );
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -30,5 +37,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  secret: process.env.AUTH_SECRET || "development-fallback-secret-for-learn-track-auth",
+  secret: authSecret || "development-fallback-secret-for-learn-track-auth",
 });

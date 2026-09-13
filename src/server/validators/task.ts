@@ -59,16 +59,14 @@ export const UpdateTaskSchema = z.object({
     .min(1, "At least 1 session required")
     .max(12, "Maximum 12 sessions allowed")
     .optional(),
-  status: z
-    .enum([
-      "PLANNED",
-      "IN_PROGRESS",
-      "LEARNING_COMPLETED",
-      "REVISION_PENDING",
-      "FULLY_COMPLETED",
-    ])
-    .optional(),
+  status: z.enum(["PLANNED", "IN_PROGRESS"]).optional(),
+});
+
+export const ToggleTaskStatusSchema = z.object({
+  id: z.string().cuid("Invalid task ID"),
+  status: z.enum(["PLANNED", "IN_PROGRESS"]),
 });
 
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof UpdateTaskSchema>;
+export type ToggleTaskStatusInput = z.infer<typeof ToggleTaskStatusSchema>;

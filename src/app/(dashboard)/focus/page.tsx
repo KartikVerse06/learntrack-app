@@ -1,41 +1,55 @@
-import { Timer, Play, RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { requireAuth } from "@/lib/session";
+import { getActiveFocusSession } from "@/server/repositories/focus-session-repository";
+import {
+  getTaskById,
+  getTasksForDate,
+  type TaskWithCategory,
+} from "@/server/repositories/learning-task-repository";
+import { getTodayISO } from "@/lib/date-utils";
+import { FocusClient } from "@/features/focus/focus-client";
 
-export default function FocusPage() {
+interface FocusPageProps {
+  searchParams?: {
+    taskId?: string;
+  };
+}
+
+export const metadata = {
+  title: "Focus Block — LearnTrack",
+  description: "45-Minute Deliberate Single-Task Focus Session",
+};
+
+export default async function FocusPage({ searchParams }: FocusPageProps) {
+  const { userId } = await requireAuth();
+
+  // 1. Fetch any currently running or paused session for this user
+  const activeSession = await getActiveFocusSession(userId);
+
+  // 2. If no active session and taskId provided in URL, retrieve the planned task
+  let selectedTask: TaskWithCategory | null = null;
+  if (!activeSession && searchParams?.taskId) {
+    try {
+      selectedTask = await getTaskById(userId, searchParams.taskId);
+    } catch {
+      selectedTask = null;
+    }
+  }
+
+  // 3. If no active session, fetch today's tasks for quick start
+  let availableTasks: TaskWithCategory[] = [];
+  if (!activeSession) {
+    try {
+      availableTasks = await getTasksForDate(userId, getTodayISO());
+    } catch {
+      availableTasks = [];
+    }
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[75vh] space-y-8 max-w-xl mx-auto text-center">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center justify-center gap-2">
-          <Timer className="h-6 w-6 text-emerald-600" />
-          <span>45-Minute Focus Block</span>
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Deliberate single-task practice without multitasking or distractions.
-        </p>
-      </div>
-
-      <Card className="w-full p-8 shadow-md border-emerald-200/50 dark:border-emerald-950/50">
-        <CardContent className="flex flex-col items-center space-y-8 p-0">
-          <div className="text-7xl md:text-8xl font-mono font-bold tracking-tighter text-foreground py-4 tabular-nums">
-            45:00
-          </div>
-          <div className="flex items-center gap-4">
-            <Button size="lg" variant="focus" className="gap-2 px-8">
-              <Play className="h-5 w-5" />
-              <span>Start Focus</span>
-            </Button>
-            <Button size="lg" variant="outline" className="gap-2">
-              <RotateCcw className="h-4 w-4" />
-              <span>Reset</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <p className="text-xs text-muted-foreground">
-        Timestamp-based delta tracking with audio chime and browser notification alerts upon completion.
-      </p>
-    </div>
+    <FocusClient
+      initialSession={activeSession}
+      selectedTask={selectedTask}
+      availableTasks={availableTasks}
+    />
   );
 }
