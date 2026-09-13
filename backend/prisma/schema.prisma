@@ -1,0 +1,264 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  PLANNED
+  IN_PROGRESS
+  LEARNING_COMPLETED
+  REVISION_PENDING
+  FULLY_COMPLETED
+}
+
+enum SessionStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+  INTERRUPTED
+}
+
+enum RevisionStatus {
+  PENDING
+  DUE
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+  SKIPPED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  timezone      String         @default("UTC")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  settings      UserSettings?
+  categories    Category[]
+  tasks         LearningTask[]
+  focusSessions FocusSession[]
+  learningLogs  LearningLog[]
+  revisions     Revision[]
+  moneyBudgets  MoneyBudget[]
+  moneyExpenses MoneyExpense[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model UserSettings {
+  id                   String  @id @default(cuid())
+  userId               String  @unique
+  defaultFocusDuration Int     @default(2700)
+  soundEnabled         Boolean @default(true)
+  soundVolume          Float   @default(0.8)
+  soundChoice          String  @default("bell")
+  notificationsEnabled Boolean @default(true)
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  color     String   @default("#2563EB")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks LearningTask[]
+
+  @@unique([userId, name])
+  @@map("categories")
+}
+
+model LearningTask {
+  id                  String     @id @default(cuid())
+  userId              String
+  categoryId          String?
+  title               String     @db.VarChar(191)
+  description         String?    @db.Text
+  plannedDate         DateTime   @db.Date
+  priority            Priority   @default(MEDIUM)
+  estimatedSessions   Int        @default(2)
+  completedSessions   Int        @default(0)
+  totalFocusMinutes   Int        @default(0)
+  status              TaskStatus @default(PLANNED)
+  learningCompletedAt DateTime?
+  fullyCompletedAt    DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  focusSessions FocusSession[]
+  learningLogs  LearningLog[]
+  revisions     Revision[]
+
+  @@index([userId, plannedDate], name: "idx_tasks_user_date")
+  @@index([userId, status], name: "idx_tasks_user_status")
+  @@map("learning_tasks")
+}
+
+model FocusSession {
+  id              String        @id @default(cuid())
+  userId          String
+  learningTaskId  String
+  startedAt       DateTime      @default(now())
+  endedAt         DateTime?
+  plannedDuration Int           @default(2700)
+  actualDuration  Int           @default(0)
+  pausedDuration  Int           @default(0)
+  status          SessionStatus @default(ACTIVE)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task        LearningTask  @relation(fields: [learningTaskId], references: [id], onDelete: Cascade)
+  learningLog LearningLog?
+
+  @@index([userId, status], name: "idx_sessions_user_status")
+  @@index([userId, startedAt], name: "idx_sessions_user_dates")
+  @@index([learningTaskId], name: "idx_sessions_task")
+  @@map("focus_sessions")
+}
+
+model LearningLog {
+  id             String   @id @default(cuid())
+  userId         String
+  learningTaskId String
+  focusSessionId String   @unique
+  whatLearned    String   @db.Text
+  whatCompleted  String?  @db.VarChar(255)
+  doubts         String?  @db.Text
+  notes          String?  @db.Text
+  confidence     Int      @db.TinyInt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task         LearningTask @relation(fields: [learningTaskId], references: [id], onDelete: Cascade)
+  focusSession FocusSession @relation(fields: [focusSessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, learningTaskId], name: "idx_logs_user_task")
+  @@map("learning_logs")
+}
+
+model Revision {
+  id             String         @id @default(cuid())
+  userId         String
+  learningTaskId String
+  revisionNumber Int            @db.TinyInt
+  scheduledDate  DateTime       @db.Date
+  status         RevisionStatus @default(PENDING)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  notes          String?        @db.Text
+  confidence     Int?           @db.TinyInt
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task LearningTask @relation(fields: [learningTaskId], references: [id], onDelete: Cascade)
+
+  @@unique([learningTaskId, revisionNumber], name: "unique_task_revision_number")
+  @@index([userId, scheduledDate, status], name: "idx_revisions_user_sched")
+  @@map("revisions")
+}
+
+enum MoneyCategory {
+  NEEDS
+  SAVINGS
+  GROWTH
+  WANTS
+}
+
+model MoneyBudget {
+  id            String         @id @default(cuid())
+  userId        String
+  month         Int            @db.TinyInt
+  year          Int
+  amount        Decimal        @db.Decimal(12, 2)
+  needsAmount   Decimal        @db.Decimal(12, 2)
+  savingsAmount Decimal        @db.Decimal(12, 2)
+  growthAmount  Decimal        @db.Decimal(12, 2)
+  wantsAmount   Decimal        @db.Decimal(12, 2)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses      MoneyExpense[]
+
+  @@unique([userId, year, month], name: "unique_user_budget_month")
+  @@index([userId, year, month], name: "idx_budgets_user_date")
+  @@map("money_budgets")
+}
+
+model MoneyExpense {
+  id        String        @id @default(cuid())
+  userId    String
+  budgetId  String
+  category  MoneyCategory
+  amount    Decimal       @db.Decimal(12, 2)
+  date      DateTime      @db.Date
+  note      String?       @db.VarChar(255)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budget MoneyBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@index([userId, budgetId], name: "idx_expenses_user_budget")
+  @@index([userId, category], name: "idx_expenses_user_category")
+  @@index([userId, date], name: "idx_expenses_user_date")
+  @@map("money_expenses")
+}
