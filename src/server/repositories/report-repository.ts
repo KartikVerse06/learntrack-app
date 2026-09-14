@@ -599,10 +599,10 @@ export async function getMasteryReport(
   if (options.categoryId) {
     whereTask.categoryId = options.categoryId;
   }
-  if (interval.fromStr && interval.toStr) {
+  if (interval.startDate && interval.endDate) {
     whereTask.plannedDate = {
-      gte: interval.fromStr,
-      lte: interval.toStr,
+      gte: interval.startDate,
+      lte: interval.endDate,
     };
   }
 
