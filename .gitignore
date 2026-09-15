@@ -1,30 +1,62 @@
-# dependencies
+# ==========================================
+# LearnTrack — Production Root .gitignore
+# ==========================================
+
+# Dependencies
 node_modules/
 /.pnp
-.pnp.js
+.pnp.*
 
-# testing
-coverage/
-
-# next.js & builds
+# Build & Bundler Artifacts (Root, Frontend, Backend)
 .next/
 dist/
 out/
 build/
+.vercel/
+.turbo/
 
-# misc
-.DS_Store
-*.pem
+# Testing & Test Reports
+coverage/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
 
-# debug logs
+# Debug & Execution Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# local env files
-.env*.local
+# Environment & Secret Files (Never commit real credentials)
 .env
+.env*.local
+.env.development
+.env.test
+.env.production
+.env.staging
 
-# typescript
+# DO NOT IGNORE environment templates / examples
+!.env.example
+!**/.env.example
+
+# Certificates & Private Keys
+*.pem
+*.key
+*.cert
+*.pfx
+*.p12
+
+# TypeScript Cache & Auto-generated Definitions
 *.tsbuildinfo
 next-env.d.ts
+.eslintcache
+
+# Operating System & IDE Artifacts
+.DS_Store
+Thumbs.db
+.idea/
+*.sublime-workspace
+*.sublime-project
