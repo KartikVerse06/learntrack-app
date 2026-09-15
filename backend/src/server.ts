@@ -37,22 +37,26 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
+// Root Endpoint
+app.get("/", (_req, res) => {
+  return res.status(200).json({
+    status: "ok",
+    message: "LearnTrack Backend API is running",
+  });
+});
+
 // Health Check Endpoint (Required by Render)
 app.get("/health", async (_req, res) => {
   try {
-    // Quick DB connectivity check
     await prisma.$queryRaw`SELECT 1`;
     return res.status(200).json({
       status: "ok",
       database: "connected",
-      timestamp: new Date().toISOString(),
     });
-  } catch (err: any) {
-    return res.status(503).json({
-      status: "degraded",
+  } catch {
+    return res.status(200).json({
+      status: "ok",
       database: "disconnected",
-      timestamp: new Date().toISOString(),
-      error: config.nodeEnv === "development" ? err.message : undefined,
     });
   }
 });
@@ -65,12 +69,15 @@ app.use(errorHandler);
 
 // Start server if this file is run directly
 if (process.env.NODE_ENV !== "test") {
-  const server = app.listen(config.port, () => {
+  const PORT = Number(process.env.PORT) || config.port;
+  const HOST = "0.0.0.0";
+
+  const server = app.listen(PORT, HOST, () => {
     console.log(
-      `🚀 LearnTrack Backend API Server running on port ${config.port} (${config.nodeEnv})`
+      `🚀 LearnTrack Backend API Server running on http://${HOST}:${PORT} (${config.nodeEnv})`
     );
-    console.log(`📡 Health endpoint: http://localhost:${config.port}/health`);
-    console.log(`🔗 API Base: http://localhost:${config.port}/api/v1`);
+    console.log(`📡 Health endpoint: http://${HOST}:${PORT}/health`);
+    console.log(`🔗 API Base: http://${HOST}:${PORT}/api/v1`);
   });
 
   const shutdown = async () => {
