@@ -23,10 +23,15 @@ app.use(
       // Allow requests with no origin (like mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true);
 
+      const normalizedOrigin = origin.replace(/\/$/, "");
+      const normalizedAllowedOrigins = allowedOrigins.map((u) => u.replace(/\/$/, ""));
+
       const isAllowed =
-        allowedOrigins.includes(origin) ||
+        normalizedAllowedOrigins.includes(normalizedOrigin) ||
+        normalizedOrigin.endsWith(".vercel.app") ||
         (config.nodeEnv === "development" &&
-          (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")));
+          (normalizedOrigin.startsWith("http://localhost:") ||
+            normalizedOrigin.startsWith("http://127.0.0.1:")));
 
       if (isAllowed) {
         return callback(null, true);

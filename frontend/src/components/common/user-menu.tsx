@@ -11,7 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOutAction } from "@/server/actions/auth-actions";
+import { useRouter } from "next/navigation";
+import { logoutApi } from "@/lib/api/auth";
 
 interface UserMenuProps {
   user?: {
@@ -22,11 +23,17 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ user }: UserMenuProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handleSignOut = () => {
     startTransition(async () => {
-      await signOutAction();
+      try {
+        await logoutApi();
+      } catch {
+        // Handled: logoutApi cleans up client auth tokens
+      }
+      window.location.href = "/login";
     });
   };
 

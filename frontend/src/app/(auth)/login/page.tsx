@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { LoginSchema, type LoginInput } from "@/server/validators/auth";
-import { loginUserAction } from "@/server/actions/auth-actions";
+import { loginApi } from "@/lib/api/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,18 +39,17 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await loginUserAction(data, callbackUrl);
-      if (!result.success) {
-        setServerError(result.error.message);
+      const result = await loginApi(data);
+      if (!result.success || !result.data) {
+        setServerError(result.error?.message || "Invalid email or password.");
         setIsSubmitting(false);
-      } else {
-        router.push(callbackUrl);
-        router.refresh();
+        return;
       }
-    } catch {
-      // In Next.js App Router, successful redirect will throw NEXT_REDIRECT
-      router.push(callbackUrl);
-      router.refresh();
+
+      window.location.href = callbackUrl;
+    } catch (err: any) {
+      setServerError(err?.message || "An unexpected error occurred. Please try again.");
+      setIsSubmitting(false);
     }
   };
 
@@ -77,13 +76,7 @@ export default function LoginPage() {
           </div>
         </CardHeader>
 
-        <form
-          action="#"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit(onSubmit)(e);
-          }}
-        >
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <CardContent className="space-y-4">
             {serverError && (
               <div

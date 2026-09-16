@@ -3,6 +3,17 @@ import { createUser, findUserByEmail, hashPassword, verifyPassword } from "../re
 import { signToken } from "../lib/jwt.js";
 import { RegisterSchema, LoginSchema } from "../validators/auth.js";
 
+function getAuthCookieOptions() {
+  const isProduction = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+}
+
 export async function register(req: Request, res: Response) {
   const parseResult = RegisterSchema.safeParse(req.body);
   if (!parseResult.success) {
@@ -31,12 +42,7 @@ export async function register(req: Request, res: Response) {
   const user = await createUser({ name, email, passwordHash, timezone });
   const token = signToken({ userId: user.id, email: user.email, name: user.name });
 
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  res.cookie("token", token, getAuthCookieOptions());
 
   return res.status(201).json({
     success: true,
@@ -88,12 +94,7 @@ export async function login(req: Request, res: Response) {
 
   const token = signToken({ userId: user.id, email: user.email, name: user.name });
 
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  res.cookie("token", token, getAuthCookieOptions());
 
   return res.status(200).json({
     success: true,
@@ -143,10 +144,12 @@ export async function me(req: Request, res: Response) {
 }
 
 export async function logout(req: Request, res: Response) {
+  const isProduction = process.env.NODE_ENV === "production";
   res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: isProduction,
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
+    path: "/",
   });
 
   return res.status(200).json({

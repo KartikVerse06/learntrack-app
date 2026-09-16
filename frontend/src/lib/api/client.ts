@@ -15,21 +15,25 @@ export interface ApiResponse<T> {
 
 export function getClientAuthToken(): string | undefined {
   if (typeof window === "undefined") return undefined;
-  return Cookies.get("learntrack_token");
+  return Cookies.get("learntrack_token") || Cookies.get("token");
 }
 
 export function setClientAuthToken(token: string): void {
   if (typeof window === "undefined") return;
-  Cookies.set("learntrack_token", token, {
+  const cookieOptions = {
     expires: 7,
-    sameSite: "lax",
+    path: "/",
+    sameSite: "lax" as const,
     secure: window.location.protocol === "https:",
-  });
+  };
+  Cookies.set("learntrack_token", token, cookieOptions);
+  Cookies.set("token", token, cookieOptions);
 }
 
 export function removeClientAuthToken(): void {
   if (typeof window === "undefined") return;
-  Cookies.remove("learntrack_token");
+  Cookies.remove("learntrack_token", { path: "/" });
+  Cookies.remove("token", { path: "/" });
 }
 
 export async function apiClient<T>(

@@ -1,5 +1,10 @@
 "use server";
 
+/**
+ * @deprecated All client authentication flows now directly call the Express backend API (@/lib/api/auth)
+ * to avoid Next.js Server Action RPC roundtrips and text/x-component mutations.
+ */
+
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { loginApi, registerApi, logoutApi } from "@/lib/api/auth";

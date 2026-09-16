@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { RegisterSchema, type RegisterInput } from "@/server/validators/auth";
-import { registerUserAction, loginUserAction } from "@/server/actions/auth-actions";
+import { registerApi } from "@/lib/api/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -42,21 +42,28 @@ export default function RegisterPage() {
     setServerError(null);
     setIsSubmitting(true);
 
-    const result = await registerUserAction(data);
-    if (!result.success) {
-      setServerError(result.error.message);
-      setIsSubmitting(false);
-      return;
-    }
-
-    setIsSuccess(true);
-    // Auto sign in user after successful registration
     try {
-      await loginUserAction({ email: data.email, password: data.password });
-      router.push("/dashboard");
-      router.refresh();
-    } catch {
-      router.push("/login?registered=true");
+      const result = await registerApi({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        timezone: data.timezone,
+      });
+
+      if (!result.success || !result.data) {
+        setServerError(
+          result.error?.message || "Registration failed. Please check your details."
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      setIsSuccess(true);
+      // registerApi automatically saves the session token to client cookies
+      window.location.href = "/dashboard";
+    } catch (err: any) {
+      setServerError(err?.message || "An unexpected error occurred. Please try again.");
+      setIsSubmitting(false);
     }
   };
 
@@ -77,13 +84,7 @@ export default function RegisterPage() {
           </div>
         </CardHeader>
 
-        <form
-          action="#"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit(onSubmit)(e);
-          }}
-        >
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <CardContent className="space-y-4">
             {serverError && (
               <div
@@ -147,7 +148,7 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <input type="hidden" {...register("timezone")} />
+            <input type="hidden" value={detectedTimezone} {...register("timezone")} />
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4 pt-2">

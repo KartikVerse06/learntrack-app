@@ -1,4 +1,5 @@
-/** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === "production";
+
 const securityHeaders = [
   {
     key: "X-DNS-Prefetch-Control",
@@ -32,12 +33,14 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      isProd
+        ? "script-src 'self' 'unsafe-inline'"
+        : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' blob: data:",
       "font-src 'self' data: https://fonts.gstatic.com",
       "media-src 'self'",
-      "connect-src 'self' https://learntrack-app.onrender.com",
+      "connect-src 'self' https://learntrack-app.onrender.com http://localhost:* http://127.0.0.1:*",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
