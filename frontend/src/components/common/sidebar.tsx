@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -10,7 +11,6 @@ import {
   CalendarDays,
   BarChart3,
   Settings,
-  BookOpenCheck,
   Wallet,
   FileText,
 } from "lucide-react";
@@ -35,8 +35,15 @@ export function Sidebar() {
     <aside className="hidden lg:flex w-64 flex-col border-r bg-card/60 backdrop-blur-sm select-none sticky top-0 h-screen shrink-0 z-20 overflow-y-auto">
       {/* Brand Header */}
       <div className="flex h-16 items-center px-6 border-b gap-3 shrink-0">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-          <BookOpenCheck className="h-5 w-5" />
+        <div className="relative flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden shrink-0 border border-border/50 bg-black/40 shadow-sm">
+          <Image
+            src="/logo.png"
+            alt="LearnTrack Logo"
+            width={40}
+            height={40}
+            className="h-full w-full object-cover"
+            priority
+          />
         </div>
         <div className="flex flex-col">
           <span className="font-bold text-base tracking-tight text-foreground">

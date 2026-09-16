@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   MoreVertical,
   Calendar,
@@ -28,7 +29,9 @@ import {
   moveTaskToTomorrowAction,
   toggleTaskStatusAction,
 } from "@/server/actions/task-actions";
-import { formatDateToISO } from "@/lib/date-utils";
+import { toggleTaskStatusApi, updateTaskApi } from "@/lib/api/tasks";
+import { getClientAuthToken } from "@/lib/api/client";
+import { formatDateToISO, getRelativeDateISO } from "@/lib/date-utils";
 import type { TaskWithCategory } from "@/types";
 
 interface TaskCardProps {
@@ -39,6 +42,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onEdit, onDelete, onViewDetails }: TaskCardProps) {
+  const router = useRouter();
   const [isMoving, setIsMoving] = useState(false);
   const [isTogglingStatus, setIsTogglingStatus] = useState(false);
 
@@ -69,7 +73,15 @@ export function TaskCard({ task, onEdit, onDelete, onViewDetails }: TaskCardProp
     try {
       setIsMoving(true);
       const plannedDateStr = formatDateToISO(new Date(task.plannedDate));
-      await moveTaskToTomorrowAction(task.id, plannedDateStr);
+      const token = getClientAuthToken();
+      if (token) {
+        const tomorrow = getRelativeDateISO(plannedDateStr, 1);
+        await updateTaskApi(task.id, { plannedDate: tomorrow }, token);
+        router.refresh();
+      } else {
+        await moveTaskToTomorrowAction(task.id, plannedDateStr);
+        router.refresh();
+      }
     } catch (error) {
       console.error("Failed to move task:", error);
     } finally {
@@ -80,11 +92,18 @@ export function TaskCard({ task, onEdit, onDelete, onViewDetails }: TaskCardProp
   const handleToggleStatus = async () => {
     try {
       setIsTogglingStatus(true);
-      const nextStatus = task.status === "PLANNED" ? "IN_PROGRESS" : "PLANNED";
-      await toggleTaskStatusAction({
-        id: task.id,
-        status: nextStatus,
-      });
+      const token = getClientAuthToken();
+      if (token) {
+        await toggleTaskStatusApi(task.id, token);
+        router.refresh();
+      } else {
+        const nextStatus = task.status === "PLANNED" ? "IN_PROGRESS" : "PLANNED";
+        await toggleTaskStatusAction({
+          id: task.id,
+          status: nextStatus,
+        });
+        router.refresh();
+      }
     } catch (error) {
       console.error("Failed to toggle status:", error);
     } finally {

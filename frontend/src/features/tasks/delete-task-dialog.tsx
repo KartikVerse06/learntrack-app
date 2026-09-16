@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -11,7 +12,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { deleteTaskApi } from "@/lib/api/tasks";
 import { deleteTaskAction } from "@/server/actions/task-actions";
+import { getClientAuthToken } from "@/lib/api/client";
 import type { TaskWithCategory } from "@/types";
 
 interface DeleteTaskDialogProps {
@@ -27,6 +30,7 @@ export function DeleteTaskDialog({
   onOpenChange,
   onSuccess,
 }: DeleteTaskDialogProps) {
+  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,12 +40,22 @@ export function DeleteTaskDialog({
     setError(null);
     try {
       setIsDeleting(true);
-      const result = await deleteTaskAction(task.id);
-      if (!result.success) {
-        setError(result.error.message);
-        return;
+      const token = getClientAuthToken();
+      if (token) {
+        const apiRes = await deleteTaskApi(task.id, token);
+        if (!apiRes.success) {
+          setError(apiRes.error?.message || "Failed to delete task.");
+          return;
+        }
+      } else {
+        const result = await deleteTaskAction(task.id);
+        if (!result.success) {
+          setError(result.error.message);
+          return;
+        }
       }
       onOpenChange(false);
+      router.refresh();
       if (onSuccess) onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete task.");

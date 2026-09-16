@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import Link from "next/link";
-import { User, LogOut, Settings, Loader2 } from "lucide-react";
+import { User, LogOut, Settings, Loader2, Download } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { logoutApi } from "@/lib/api/auth";
+import { usePwa } from "@/components/pwa/pwa-provider";
 
 interface UserMenuProps {
   user?: {
@@ -24,6 +25,7 @@ interface UserMenuProps {
 
 export function UserMenu({ user }: UserMenuProps) {
   const router = useRouter();
+  const { isInstallable, installApp } = usePwa();
   const [isPending, startTransition] = useTransition();
 
   const handleSignOut = () => {
@@ -64,6 +66,18 @@ export function UserMenu({ user }: UserMenuProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {isInstallable && (
+          <>
+            <DropdownMenuItem
+              onClick={installApp}
+              className="flex items-center gap-2 text-primary font-medium cursor-pointer"
+            >
+              <Download className="h-4 w-4 text-primary" />
+              <span>Install App</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem asChild>
           <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
             <Settings className="h-4 w-4 text-muted-foreground" />

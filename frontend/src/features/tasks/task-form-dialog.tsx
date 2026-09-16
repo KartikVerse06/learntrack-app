@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Plus, Edit2, Loader2, Sparkles } from "lucide-react";
+import { Plus, Edit2, Loader2, Sparkles, FolderPlus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,10 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  createTaskAction,
-  updateTaskAction,
-} from "@/server/actions/task-actions";
+import { createTaskApi, updateTaskApi } from "@/lib/api/tasks";
+import { createCategoryApi } from "@/lib/api/categories";
+import { getClientAuthToken } from "@/lib/api/client";
 import { formatDateToISO } from "@/lib/date-utils";
 import type { TaskWithCategory, Category } from "@/types";
 
@@ -49,13 +49,25 @@ export function TaskFormDialog({
   taskToEdit,
   onSuccess,
 }: TaskFormDialogProps) {
+  const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const isEditing = Boolean(taskToEdit);
+
+  // Maintain local category list for instant additions
+  const [categoryList, setCategoryList] = useState<Category[]>(categories);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+
+  useEffect(() => {
+    setCategoryList(categories);
+  }, [categories]);
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<TaskFormValues>({
     defaultValues: {
@@ -67,6 +79,8 @@ export function TaskFormDialog({
       estimatedSessions: 2,
     },
   });
+
+  const selectedCategoryId = watch("categoryId");
 
   useEffect(() => {
     if (taskToEdit) {
@@ -92,41 +106,102 @@ export function TaskFormDialog({
         status: "PLANNED",
       });
     }
+    setNewCategoryName("");
     setServerError(null);
   }, [taskToEdit, defaultDate, reset, open]);
+
+  const handleCreateNewCategory = async (): Promise<string | null> => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return null;
+
+    setIsCreatingCategory(true);
+    setServerError(null);
+    try {
+      const token = getClientAuthToken();
+      if (!token) {
+        setServerError("Authentication required. Please sign in again.");
+        setIsCreatingCategory(false);
+        return null;
+      }
+
+      const res = await createCategoryApi({ name: trimmed, color: "#2563EB" }, token);
+      if (!res.success || !res.data) {
+        setServerError(res.error?.message || "Failed to create category");
+        setIsCreatingCategory(false);
+        return null;
+      }
+
+      const newCat: Category = res.data;
+      setCategoryList((prev) => {
+        if (prev.some((c) => c.id === newCat.id)) return prev;
+        return [...prev, newCat];
+      });
+      setValue("categoryId", newCat.id);
+      setNewCategoryName("");
+      setIsCreatingCategory(false);
+      return newCat.id;
+    } catch (err: any) {
+      setServerError(err?.message || "Error creating category");
+      setIsCreatingCategory(false);
+      return null;
+    }
+  };
 
   const onSubmit = async (data: TaskFormValues) => {
     setServerError(null);
     try {
+      const token = getClientAuthToken();
+      if (!token) {
+        setServerError("Authentication required. Please sign in to create or edit tasks.");
+        return;
+      }
+
+      let finalCategoryId: string | null = data.categoryId ? data.categoryId : null;
+
+      // If user selected "__OTHER__"
+      if (data.categoryId === "__OTHER__") {
+        if (!newCategoryName.trim()) {
+          setServerError("Please enter a name for the new category, or select an existing one.");
+          return;
+        }
+        const createdId = await handleCreateNewCategory();
+        if (!createdId) {
+          // Error is already set in handleCreateNewCategory
+          return;
+        }
+        finalCategoryId = createdId;
+      }
+
       const payload = {
         title: data.title,
         description: data.description?.trim() ? data.description.trim() : null,
-        categoryId: data.categoryId ? data.categoryId : null,
+        categoryId: finalCategoryId,
         plannedDate: data.plannedDate,
         priority: data.priority,
         estimatedSessions: Number(data.estimatedSessions),
       };
 
       if (isEditing && taskToEdit) {
-        const result = await updateTaskAction({
-          id: taskToEdit.id,
-          ...payload,
-          status: data.status,
-        });
+        const result = await updateTaskApi(
+          taskToEdit.id,
+          { ...payload, status: data.status },
+          token
+        );
 
         if (!result.success) {
-          setServerError(result.error.message);
+          setServerError(result.error?.message || "Failed to update task.");
           return;
         }
       } else {
-        const result = await createTaskAction(payload);
+        const result = await createTaskApi(payload, token);
         if (!result.success) {
-          setServerError(result.error.message);
+          setServerError(result.error?.message || "Failed to create task.");
           return;
         }
       }
 
       onOpenChange(false);
+      router.refresh();
       if (onSuccess) onSuccess();
     } catch (err) {
       setServerError(
@@ -216,12 +291,59 @@ export function TaskFormDialog({
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="">No Category</option>
-                {categories.map((cat) => (
+                {categoryList.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
                 ))}
+                <option value="__OTHER__">+ Other (Add New Category)</option>
               </select>
+
+              {/* Expandable New Category Input when "Other" is selected */}
+              {selectedCategoryId === "__OTHER__" && (
+                <div className="space-y-2 mt-2 p-3 rounded-lg border border-primary/20 bg-primary/5 dark:bg-primary/10 animate-in fade-in-50 duration-150">
+                  <Label htmlFor="new-category-name" className="text-xs font-semibold flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-primary">
+                      <FolderPlus className="h-3.5 w-3.5" />
+                      <span>New Category Name <span className="text-destructive">*</span></span>
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-normal">
+                      Saves to your categories
+                    </span>
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="new-category-name"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleCreateNewCategory();
+                        }
+                      }}
+                      placeholder="e.g. System Design, Rust, Biology"
+                      className="text-sm h-9 bg-background flex-1"
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={!newCategoryName.trim() || isCreatingCategory}
+                      onClick={handleCreateNewCategory}
+                      className="h-9 text-xs gap-1.5 px-3 shrink-0"
+                    >
+                      {isCreatingCategory ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Plus className="h-3.5 w-3.5" />
+                      )}
+                      <span>Add</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">

@@ -15,7 +15,13 @@ export interface ApiResponse<T> {
 
 export function getClientAuthToken(): string | undefined {
   if (typeof window === "undefined") return undefined;
-  return Cookies.get("learntrack_token") || Cookies.get("token");
+  const cookieToken = Cookies.get("learntrack_token") || Cookies.get("token");
+  if (cookieToken) return cookieToken;
+  try {
+    return localStorage.getItem("learntrack_token") || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function setClientAuthToken(token: string): void {
@@ -28,12 +34,22 @@ export function setClientAuthToken(token: string): void {
   };
   Cookies.set("learntrack_token", token, cookieOptions);
   Cookies.set("token", token, cookieOptions);
+  try {
+    localStorage.setItem("learntrack_token", token);
+  } catch {
+    // Ignore localStorage failures (e.g. private browsing quota)
+  }
 }
 
 export function removeClientAuthToken(): void {
   if (typeof window === "undefined") return;
   Cookies.remove("learntrack_token", { path: "/" });
   Cookies.remove("token", { path: "/" });
+  try {
+    localStorage.removeItem("learntrack_token");
+  } catch {
+    // Ignore localStorage failures
+  }
 }
 
 export async function apiClient<T>(

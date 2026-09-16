@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarRange,
@@ -35,7 +35,33 @@ const secondaryNavItems = [
 
 export function MobileNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+
+  // Automatically close drawer on route changes
+  useEffect(() => {
+    setIsMoreOpen(false);
+  }, [pathname]);
+
+  // Close drawer on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMoreOpen(false);
+      }
+    };
+    if (isMoreOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMoreOpen]);
+
+  const handleNavigate = (href: string) => {
+    setIsMoreOpen(false);
+    router.push(href);
+  };
 
   const isMoreActive = secondaryNavItems.some(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -46,7 +72,7 @@ export function MobileNav() {
       {/* Mobile "More" Drawer / Backdrop */}
       {isMoreOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden animate-in fade-in-0 duration-150"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden animate-in fade-in-0 duration-150"
           onClick={() => setIsMoreOpen(false)}
           aria-hidden="true"
         />
@@ -54,15 +80,17 @@ export function MobileNav() {
 
       {isMoreOpen && (
         <div
-          className="fixed bottom-16 left-0 right-0 z-45 mx-3 mb-2 rounded-2xl border bg-card/95 backdrop-blur-md p-4 shadow-2xl lg:hidden animate-in slide-in-from-bottom-4 duration-200"
+          className="fixed bottom-16 left-0 right-0 z-50 mx-3 mb-2 rounded-2xl border bg-card/95 backdrop-blur-md p-4 shadow-2xl lg:hidden animate-in slide-in-from-bottom-4 duration-200"
           role="dialog"
           aria-label="Additional Navigation Options"
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between pb-3 border-b mb-3">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               More Workspaces
             </span>
             <button
+              type="button"
               onClick={() => setIsMoreOpen(false)}
               className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
               aria-label="Close menu"
@@ -79,11 +107,14 @@ export function MobileNav() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  onClick={() => setIsMoreOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigate(item.href);
+                  }}
                   className={cn(
                     "flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all min-h-[68px] active:scale-95",
                     isActive
-                      ? "bg-primary text-primary-foreground border-primary font-semibold shadow-xs"
+                      ? "bg-primary text-primary-foreground border-primary font-semibold shadow-sm"
                       : "bg-muted/30 text-foreground hover:bg-accent border-border/50"
                   )}
                 >
