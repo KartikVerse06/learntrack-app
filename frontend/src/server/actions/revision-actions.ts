@@ -56,10 +56,15 @@ export async function getRevisionMetricsAction(): Promise<ActionResult<RevisionM
 export async function completeRevisionAction(
   rawInput: { revisionId: string; confidence: number; notes?: string }
 ): Promise<ActionResult<any>> {
-  const res = await completeRevisionApi(rawInput.revisionId, {
-    confidence: rawInput.confidence,
-    notes: rawInput.notes,
-  });
+  const token = await getSessionToken();
+  const res = await completeRevisionApi(
+    rawInput.revisionId,
+    {
+      confidence: rawInput.confidence,
+      notes: rawInput.notes,
+    },
+    token
+  );
   if (!res.success) {
     return {
       success: false,
@@ -74,8 +79,9 @@ export async function completeRevisionAction(
 export async function markTopicAsLearnedAction(
   rawInput: string | { taskId: string }
 ): Promise<ActionResult<any>> {
+  const token = await getSessionToken();
   const taskId = typeof rawInput === "string" ? rawInput : rawInput.taskId;
-  const res = await markTopicAsLearnedApi(taskId);
+  const res = await markTopicAsLearnedApi(taskId, token);
   if (!res.success) {
     return {
       success: false,

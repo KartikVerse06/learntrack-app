@@ -37,7 +37,23 @@ export async function apiClient<T>(
   options: RequestInit & { token?: string } = {}
 ): Promise<ApiResponse<T>> {
   const { token, headers: customHeaders, ...restOptions } = options;
-  const authToken = token || getClientAuthToken();
+  let authToken = token;
+
+  if (!authToken) {
+    if (typeof window !== "undefined") {
+      authToken = getClientAuthToken();
+    } else {
+      try {
+        const { cookies } = await import("next/headers");
+        const cookieStore = cookies();
+        authToken =
+          cookieStore.get("learntrack_token")?.value ||
+          cookieStore.get("token")?.value;
+      } catch {
+        // Can fail if called outside of request context on server
+      }
+    }
+  }
 
   const url = endpoint.startsWith("http")
     ? endpoint

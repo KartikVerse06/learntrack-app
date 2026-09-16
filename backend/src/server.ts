@@ -12,17 +12,23 @@ export const app = express();
 app.set("trust proxy", 1);
 
 // CORS configuration
+const allowedOrigins = [
+  "https://learntrack-six.vercel.app",
+  ...config.frontendUrl.filter((u) => u && u !== "*"),
+];
+
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true);
-      
-      const isAllowed = config.frontendUrl.some(
-        (allowed) => origin === allowed || allowed === "*" || origin.endsWith(".vercel.app")
-      );
 
-      if (isAllowed || config.nodeEnv === "development") {
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        (config.nodeEnv === "development" &&
+          (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")));
+
+      if (isAllowed) {
         return callback(null, true);
       }
       return callback(new Error(`CORS origin not allowed: ${origin}`));
@@ -53,10 +59,12 @@ app.get("/health", async (_req, res) => {
       status: "ok",
       database: "connected",
     });
-  } catch {
+  } catch (err: any) {
+    console.error("[Health Check Error] Database query failed:", err?.message || err);
     return res.status(200).json({
       status: "ok",
       database: "disconnected",
+      error: err?.message || "Database connection failure",
     });
   }
 });

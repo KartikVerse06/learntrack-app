@@ -25,7 +25,8 @@ export async function getActiveFocusSessionAction(): Promise<ActionResult<FocusS
 }
 
 export async function startFocusSessionAction(rawInput: { taskId: string }): Promise<ActionResult<FocusSessionWithTask>> {
-  const res = await startFocusSessionApi(rawInput.taskId);
+  const token = await getSessionToken();
+  const res = await startFocusSessionApi(rawInput.taskId, token);
   if (!res.success) {
     return {
       success: false,
@@ -38,7 +39,8 @@ export async function startFocusSessionAction(rawInput: { taskId: string }): Pro
 }
 
 export async function pauseFocusSessionAction(rawInput: { sessionId: string }): Promise<ActionResult<FocusSessionWithTask>> {
-  const res = await pauseFocusSessionApi(rawInput.sessionId);
+  const token = await getSessionToken();
+  const res = await pauseFocusSessionApi(rawInput.sessionId, token);
   if (!res.success) {
     return {
       success: false,
@@ -50,7 +52,8 @@ export async function pauseFocusSessionAction(rawInput: { sessionId: string }): 
 }
 
 export async function resumeFocusSessionAction(rawInput: { sessionId: string }): Promise<ActionResult<FocusSessionWithTask>> {
-  const res = await resumeFocusSessionApi(rawInput.sessionId);
+  const token = await getSessionToken();
+  const res = await resumeFocusSessionApi(rawInput.sessionId, token);
   if (!res.success) {
     return {
       success: false,
@@ -62,7 +65,8 @@ export async function resumeFocusSessionAction(rawInput: { sessionId: string }):
 }
 
 export async function completeFocusSessionAction(rawInput: { sessionId: string; actualDuration: number }): Promise<ActionResult<FocusSessionWithTask>> {
-  const res = await completeFocusSessionApi(rawInput.sessionId, rawInput.actualDuration);
+  const token = await getSessionToken();
+  const res = await completeFocusSessionApi(rawInput.sessionId, rawInput.actualDuration, token);
   if (!res.success) {
     return {
       success: false,
@@ -76,7 +80,8 @@ export async function completeFocusSessionAction(rawInput: { sessionId: string; 
 }
 
 export async function cancelFocusSessionAction(rawInput: { sessionId: string }): Promise<ActionResult<FocusSessionWithTask>> {
-  const res = await cancelFocusSessionApi(rawInput.sessionId);
+  const token = await getSessionToken();
+  const res = await cancelFocusSessionApi(rawInput.sessionId, token);
   if (!res.success) {
     return {
       success: false,

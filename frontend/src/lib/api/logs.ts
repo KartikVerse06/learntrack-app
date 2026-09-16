@@ -16,16 +16,18 @@ export async function getLearningLogByIdApi(id: string, token?: string): Promise
   return apiClient<any>(`/api/v1/learning-logs/${id}`, { token });
 }
 
-export async function createLearningLogApi(data: any): Promise<ApiResponse<any>> {
+export async function createLearningLogApi(data: any, token?: string): Promise<ApiResponse<any>> {
   return apiClient<any>("/api/v1/learning-logs", {
     method: "POST",
     body: JSON.stringify(data),
+    token,
   });
 }
 
-export async function updateLearningLogApi(id: string, data: any): Promise<ApiResponse<any>> {
+export async function updateLearningLogApi(id: string, data: any, token?: string): Promise<ApiResponse<any>> {
   return apiClient<any>(`/api/v1/learning-logs/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data),
+    token,
   });
 }

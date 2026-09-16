@@ -45,7 +45,7 @@ export async function createLearningTaskAction(
   rawInput: any
 ): Promise<ActionResult<TaskWithCategory>> {
   const token = await getSessionToken();
-  const res = await createTaskApi(rawInput);
+  const res = await createTaskApi(rawInput, token);
   if (!res.success) {
     return {
       success: false,
@@ -63,9 +63,10 @@ export async function updateLearningTaskAction(
   taskIdOrInput: string | any,
   maybeInput?: any
 ): Promise<ActionResult<TaskWithCategory>> {
+  const token = await getSessionToken();
   const taskId = typeof taskIdOrInput === "string" ? taskIdOrInput : taskIdOrInput.id;
   const rawInput = typeof taskIdOrInput === "string" ? maybeInput : taskIdOrInput;
-  const res = await updateTaskApi(taskId, rawInput);
+  const res = await updateTaskApi(taskId, rawInput, token);
   if (!res.success) {
     return {
       success: false,
@@ -81,7 +82,8 @@ export async function updateLearningTaskAction(
 export async function deleteTaskAction(
   taskId: string
 ): Promise<ActionResult<any>> {
-  const res = await deleteTaskApi(taskId);
+  const token = await getSessionToken();
+  const res = await deleteTaskApi(taskId, token);
   if (!res.success) {
     return {
       success: false,
@@ -96,7 +98,8 @@ export async function deleteTaskAction(
 export async function toggleTaskStatusAction(
   rawInput: { id: string; status: any }
 ): Promise<ActionResult<TaskWithCategory>> {
-  const res = await toggleTaskStatusApi(rawInput.id);
+  const token = await getSessionToken();
+  const res = await toggleTaskStatusApi(rawInput.id, token);
   if (!res.success) {
     return {
       success: false,

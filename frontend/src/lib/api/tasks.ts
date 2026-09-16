@@ -14,28 +14,32 @@ export async function getTaskByIdApi(id: string, token?: string): Promise<ApiRes
   return apiClient<any>(`/api/v1/tasks/${id}`, { token });
 }
 
-export async function createTaskApi(data: any): Promise<ApiResponse<any>> {
+export async function createTaskApi(data: any, token?: string): Promise<ApiResponse<any>> {
   return apiClient<any>("/api/v1/tasks", {
     method: "POST",
     body: JSON.stringify(data),
+    token,
   });
 }
 
-export async function updateTaskApi(id: string, data: any): Promise<ApiResponse<any>> {
+export async function updateTaskApi(id: string, data: any, token?: string): Promise<ApiResponse<any>> {
   return apiClient<any>(`/api/v1/tasks/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data),
+    token,
   });
 }
 
-export async function deleteTaskApi(id: string): Promise<ApiResponse<any>> {
+export async function deleteTaskApi(id: string, token?: string): Promise<ApiResponse<any>> {
   return apiClient<any>(`/api/v1/tasks/${id}`, {
     method: "DELETE",
+    token,
   });
 }
 
-export async function toggleTaskStatusApi(id: string): Promise<ApiResponse<any>> {
+export async function toggleTaskStatusApi(id: string, token?: string): Promise<ApiResponse<any>> {
   return apiClient<any>(`/api/v1/tasks/${id}/toggle`, {
     method: "POST",
+    token,
   });
 }

@@ -14,7 +14,8 @@ import type { LearningLogWithRelations, ActionResult } from "@/types";
 export async function createLearningLogAction(
   rawInput: any
 ): Promise<ActionResult<LearningLogWithRelations>> {
-  const res = await createLearningLogApi(rawInput);
+  const token = await getSessionToken();
+  const res = await createLearningLogApi(rawInput, token);
   if (!res.success) {
     return {
       success: false,
@@ -30,8 +31,9 @@ export async function createLearningLogAction(
 export async function updateLearningLogAction(
   rawInput: any
 ): Promise<ActionResult<LearningLogWithRelations>> {
+  const token = await getSessionToken();
   const { id, ...data } = rawInput;
-  const res = await updateLearningLogApi(id, data);
+  const res = await updateLearningLogApi(id, data, token);
   if (!res.success) {
     return {
       success: false,

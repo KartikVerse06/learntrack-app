@@ -29,13 +29,18 @@ export function useFocusTimer(
   const [session, setSession] = useState<FocusSessionWithTask | null>(initialSession);
   const [remainingSeconds, setRemainingSeconds] = useState<number>(() => {
     if (!initialSession) return 2700;
+    const rawStart = initialSession.startedAt
+      ? new Date(initialSession.startedAt).getTime()
+      : ((initialSession as any).startTime ? Number((initialSession as any).startTime) : Date.now());
+    const startMs = Number.isNaN(rawStart) ? Date.now() : rawStart;
+
     return calculateRemainingSeconds({
-      startTimestampMs: new Date(initialSession.startedAt).getTime(),
-      plannedDurationSeconds: initialSession.plannedDuration,
-      accumulatedPausedDurationSeconds: initialSession.pausedDuration,
+      startTimestampMs: startMs,
+      plannedDurationSeconds: initialSession.plannedDuration || 2700,
+      accumulatedPausedDurationSeconds: initialSession.pausedDuration || 0,
       isPaused: initialSession.status === "PAUSED",
       pauseStartTimestampMs:
-        initialSession.status === "PAUSED"
+        initialSession.status === "PAUSED" && initialSession.updatedAt
           ? new Date(initialSession.updatedAt).getTime()
           : null,
     });
@@ -59,22 +64,25 @@ export function useFocusTimer(
       return;
     }
 
-    const startMs = new Date(session.startedAt).getTime();
+    const rawStart = session.startedAt
+      ? new Date(session.startedAt).getTime()
+      : ((session as any).startTime ? Number((session as any).startTime) : Date.now());
+    const startMs = Number.isNaN(rawStart) ? Date.now() : rawStart;
     const isPaused = session.status === "PAUSED";
-    const pauseStartMs = isPaused ? new Date(session.updatedAt).getTime() : null;
+    const pauseStartMs = isPaused && session.updatedAt ? new Date(session.updatedAt).getTime() : null;
 
     const remaining = calculateRemainingSeconds({
       startTimestampMs: startMs,
-      plannedDurationSeconds: session.plannedDuration,
-      accumulatedPausedDurationSeconds: session.pausedDuration,
+      plannedDurationSeconds: session.plannedDuration || 2700,
+      accumulatedPausedDurationSeconds: session.pausedDuration || 0,
       isPaused,
       pauseStartTimestampMs: pauseStartMs,
     });
 
     const elapsed = calculateActiveElapsedSeconds({
       startTimestampMs: startMs,
-      plannedDurationSeconds: session.plannedDuration,
-      accumulatedPausedDurationSeconds: session.pausedDuration,
+      plannedDurationSeconds: session.plannedDuration || 2700,
+      accumulatedPausedDurationSeconds: session.pausedDuration || 0,
       isPaused,
       pauseStartTimestampMs: pauseStartMs,
     });

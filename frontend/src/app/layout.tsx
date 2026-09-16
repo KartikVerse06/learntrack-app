@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "LearnTrack — Deliberate Learning & Spaced Revision System",
   description:
     "A dedicated learning self-tracking web application: 45-minute focus blocks, reflective logs, and automated 4-stage spaced revisions.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

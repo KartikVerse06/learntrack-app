@@ -18,32 +18,41 @@ export async function getFinancialHistoryApi(token?: string): Promise<ApiRespons
   return apiClient<any>("/api/v1/money/history", { token });
 }
 
-export async function setMonthlyBudgetApi(data: {
-  amount: number;
-  month: number;
-  year: number;
-}): Promise<ApiResponse<any>> {
+export async function setMonthlyBudgetApi(
+  data: {
+    amount: number;
+    month: number;
+    year: number;
+  },
+  token?: string
+): Promise<ApiResponse<any>> {
   return apiClient<any>("/api/v1/money/budget", {
     method: "POST",
     body: JSON.stringify(data),
+    token,
   });
 }
 
-export async function createExpenseApi(data: {
-  budgetId: string;
-  category: "NEEDS" | "SAVINGS" | "GROWTH" | "WANTS";
-  amount: number;
-  date: string;
-  note?: string | null;
-}): Promise<ApiResponse<any>> {
+export async function createExpenseApi(
+  data: {
+    budgetId: string;
+    category: "NEEDS" | "SAVINGS" | "GROWTH" | "WANTS";
+    amount: number;
+    date: string;
+    note?: string | null;
+  },
+  token?: string
+): Promise<ApiResponse<any>> {
   return apiClient<any>("/api/v1/money/expenses", {
     method: "POST",
     body: JSON.stringify(data),
+    token,
   });
 }
 
-export async function deleteExpenseApi(id: string): Promise<ApiResponse<any>> {
+export async function deleteExpenseApi(id: string, token?: string): Promise<ApiResponse<any>> {
   return apiClient<any>(`/api/v1/money/expenses/${id}`, {
     method: "DELETE",
+    token,
   });
 }

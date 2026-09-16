@@ -41,7 +41,8 @@ export async function getFinancialHistoryAction(): Promise<ActionResult<any>> {
 export async function setMonthlyBudgetAction(
   rawInput: { amount: number; month: number; year: number }
 ): Promise<ActionResult<any>> {
-  const res = await setMonthlyBudgetApi(rawInput);
+  const token = await getSessionToken();
+  const res = await setMonthlyBudgetApi(rawInput, token);
   if (!res.success) {
     return {
       success: false,
@@ -56,7 +57,8 @@ export async function setMonthlyBudgetAction(
 export async function createExpenseAction(
   rawInput: any
 ): Promise<ActionResult<any>> {
-  const res = await createExpenseApi(rawInput);
+  const token = await getSessionToken();
+  const res = await createExpenseApi(rawInput, token);
   if (!res.success) {
     return {
       success: false,
@@ -71,8 +73,9 @@ export async function createExpenseAction(
 export async function deleteExpenseAction(
   rawInput: string | { expenseId: string }
 ): Promise<ActionResult<any>> {
+  const token = await getSessionToken();
   const expenseId = typeof rawInput === "string" ? rawInput : rawInput.expenseId;
-  const res = await deleteExpenseApi(expenseId);
+  const res = await deleteExpenseApi(expenseId, token);
   if (!res.success) {
     return {
       success: false,
