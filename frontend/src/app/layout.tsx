@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "LearnTrack — Deliberate Learning & Spaced Revision System",
   description:
     "A dedicated learning self-tracking web application: 45-minute focus blocks, reflective logs, and automated 4-stage spaced revisions.",
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest.json",
   applicationName: "LearnTrack",
   appleWebApp: {
     capable: true,

@@ -1,11 +1,10 @@
 // LearnTrack Production-Safe Service Worker
 // Enforces zero-caching on authenticated API endpoints and sensitive data
-const CACHE_NAME = "learntrack-v1";
+const CACHE_NAME = "learntrack-v2";
 
 const PRECACHE_ASSETS = [
   "/offline.html",
   "/manifest.json",
-  "/manifest.webmanifest",
   "/favicon.ico",
   "/logo.png",
   "/icons/icon-192x192.png",
@@ -16,12 +15,16 @@ const PRECACHE_ASSETS = [
   "/icons/favicon-16x16.png",
 ];
 
-// 1. Installation — Cache core shell and offline fallback
+// 1. Installation — Resilient precache of core shell and offline fallback
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_ASSETS))
+      .then(async (cache) => {
+        await Promise.allSettled(
+          PRECACHE_ASSETS.map((asset) => cache.add(asset).catch(() => {}))
+        );
+      })
       .then(() => self.skipWaiting())
   );
 });

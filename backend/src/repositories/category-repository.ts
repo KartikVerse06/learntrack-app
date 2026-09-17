@@ -30,7 +30,7 @@ export async function createCategory(
   });
 
   if (existing) {
-    throw new Error(`Category "${trimmedName}" already exists for this user.`);
+    return existing;
   }
 
   return prisma.category.create({
