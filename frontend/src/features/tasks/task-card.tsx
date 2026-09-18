@@ -25,10 +25,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  moveTaskToTomorrowAction,
-  toggleTaskStatusAction,
-} from "@/server/actions/task-actions";
 import { toggleTaskStatusApi, updateTaskApi } from "@/lib/api/tasks";
 import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import { formatDateToISO, getRelativeDateISO } from "@/lib/date-utils";
@@ -77,12 +73,11 @@ export function TaskCard({ task, onEdit, onDelete, onViewDetails }: TaskCardProp
       if (!token) {
         token = await ensureClientAuthToken();
       }
-      if (token) {
-        const tomorrow = getRelativeDateISO(plannedDateStr, 1);
-        await updateTaskApi(task.id, { plannedDate: tomorrow }, token);
-        router.refresh();
-      } else {
-        await moveTaskToTomorrowAction(task.id, plannedDateStr);
+      if (!token) return;
+
+      const tomorrow = getRelativeDateISO(plannedDateStr, 1);
+      const res = await updateTaskApi(task.id, { plannedDate: tomorrow }, token);
+      if (res.success) {
         router.refresh();
       }
     } catch (error) {
@@ -99,15 +94,10 @@ export function TaskCard({ task, onEdit, onDelete, onViewDetails }: TaskCardProp
       if (!token) {
         token = await ensureClientAuthToken();
       }
-      if (token) {
-        await toggleTaskStatusApi(task.id, token);
-        router.refresh();
-      } else {
-        const nextStatus = task.status === "PLANNED" ? "IN_PROGRESS" : "PLANNED";
-        await toggleTaskStatusAction({
-          id: task.id,
-          status: nextStatus,
-        });
+      if (!token) return;
+
+      const res = await toggleTaskStatusApi(task.id, token);
+      if (res.success) {
         router.refresh();
       }
     } catch (error) {

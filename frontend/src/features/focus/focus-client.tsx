@@ -30,12 +30,13 @@ import {
 import type { FocusSessionWithTask, TaskWithCategory, LearningLogWithRelations } from "@/types";
 import { useFocusTimer } from "./use-focus-timer";
 import {
-  startFocusAction,
-  pauseFocusAction,
-  resumeFocusAction,
-  completeFocusAction,
-  cancelFocusAction,
-} from "@/server/actions/focus-actions";
+  startFocusSessionApi,
+  pauseFocusSessionApi,
+  resumeFocusSessionApi,
+  completeFocusSessionApi,
+  cancelFocusSessionApi,
+} from "@/lib/api/focus";
+import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import { soundManager, type SoundChoice } from "@/lib/sound";
 import {
   requestNotificationPermission,
@@ -85,12 +86,10 @@ export function FocusClient({
 
       // 4. Server-side session completion & task progression
       const durationToPersist = Math.max(1, elapsed);
-      const res = await completeFocusAction({
-        sessionId: completedSession.id,
-        actualDuration: durationToPersist,
-      });
+      const token = getClientAuthToken() || await ensureClientAuthToken();
+      const res = await completeFocusSessionApi(completedSession.id, durationToPersist, token || undefined);
 
-      if (res.success) {
+      if (res.success && res.data) {
         setSessionRef.current?.(res.data);
         setShowLogModal(true);
       } else if (res.error) {
@@ -126,8 +125,9 @@ export function FocusClient({
     requestNotificationPermission().catch(() => {});
 
     startTransition(async () => {
-      const res = await startFocusAction({ taskId });
-      if (res.success) {
+      const token = getClientAuthToken() || await ensureClientAuthToken();
+      const res = await startFocusSessionApi(taskId, token || undefined);
+      if (res.success && res.data) {
         setSession(res.data);
         router.refresh();
       } else {
@@ -140,8 +140,9 @@ export function FocusClient({
     if (!session) return;
     setErrorMessage(null);
     startTransition(async () => {
-      const res = await pauseFocusAction({ sessionId: session.id });
-      if (res.success) {
+      const token = getClientAuthToken() || await ensureClientAuthToken();
+      const res = await pauseFocusSessionApi(session.id, token || undefined);
+      if (res.success && res.data) {
         setSession(res.data);
       } else {
         setErrorMessage(res.error?.message || "Failed to pause session.");
@@ -153,8 +154,9 @@ export function FocusClient({
     if (!session) return;
     setErrorMessage(null);
     startTransition(async () => {
-      const res = await resumeFocusAction({ sessionId: session.id });
-      if (res.success) {
+      const token = getClientAuthToken() || await ensureClientAuthToken();
+      const res = await resumeFocusSessionApi(session.id, token || undefined);
+      if (res.success && res.data) {
         setSession(res.data);
       } else {
         setErrorMessage(res.error?.message || "Failed to resume session.");
@@ -174,8 +176,9 @@ export function FocusClient({
     if (!session) return;
     setShowCancelDialog(false);
     startTransition(async () => {
-      const res = await cancelFocusAction({ sessionId: session.id });
-      if (res.success) {
+      const token = getClientAuthToken() || await ensureClientAuthToken();
+      const res = await cancelFocusSessionApi(session.id, token || undefined);
+      if (res.success && res.data) {
         setSession(res.data);
       } else {
         setErrorMessage(res.error?.message || "Failed to cancel session.");

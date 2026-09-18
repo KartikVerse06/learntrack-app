@@ -28,9 +28,10 @@ import {
   Award,
 } from "lucide-react";
 import {
-  getRevisionDetailsAction,
-  completeRevisionAction,
-} from "@/server/actions/revision-actions";
+  getRevisionByIdApi,
+  completeRevisionApi,
+} from "@/lib/api/revisions";
+import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import type { RevisionWithDetails } from "@/types";
 
 interface ActiveRecallDrawerProps {
@@ -64,17 +65,25 @@ export function ActiveRecallDrawer({
       setErrorMessage(null);
       setMasteryCelebration(false);
 
-      getRevisionDetailsAction(revisionId)
-        .then((res) => {
-          if (res.success) {
-            setRevision(res.data);
-            if (res.data.notes) setNotes(res.data.notes);
-            if (res.data.confidence) setConfidence(res.data.confidence);
-          } else {
-            setErrorMessage(res.error.message);
-          }
-        })
-        .finally(() => setIsLoading(false));
+      (async () => {
+        let token = getClientAuthToken();
+        if (!token) token = await ensureClientAuthToken();
+        if (!token) {
+          setErrorMessage("Authentication required. Please sign in again.");
+          setIsLoading(false);
+          return;
+        }
+
+        const res = await getRevisionByIdApi(revisionId, token);
+        if (res.success && res.data) {
+          setRevision(res.data);
+          if (res.data.notes) setNotes(res.data.notes);
+          if (res.data.confidence) setConfidence(res.data.confidence);
+        } else {
+          setErrorMessage(res.error?.message || "Failed to load revision details.");
+        }
+        setIsLoading(false);
+      })();
     } else {
       setRevision(null);
     }
@@ -86,16 +95,27 @@ export function ActiveRecallDrawer({
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    const res = await completeRevisionAction({
+    let token = getClientAuthToken();
+    if (!token) token = await ensureClientAuthToken();
+    if (!token) {
+      setErrorMessage("Authentication required. Please sign in again.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const res = await completeRevisionApi(
       revisionId,
-      notes: notes.trim() || undefined,
-      confidence,
-    });
+      {
+        notes: notes.trim() || undefined,
+        confidence,
+      },
+      token
+    );
 
     setIsSubmitting(false);
 
-    if (!res.success) {
-      setErrorMessage(res.error.message);
+    if (!res.success || !res.data) {
+      setErrorMessage(res.error?.message || "Failed to complete revision.");
       return;
     }
 

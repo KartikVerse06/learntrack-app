@@ -38,18 +38,19 @@ import {
 } from "@/components/ui/dialog";
 import { TaskFormDialog } from "@/features/tasks/task-form-dialog";
 import { DeleteTaskDialog } from "@/features/tasks/delete-task-dialog";
-import { toggleTaskStatusAction } from "@/server/actions/task-actions";
-import { markTopicAsLearnedAction } from "@/server/actions/revision-actions";
+import { toggleTaskStatusApi } from "@/lib/api/tasks";
+import { markTopicAsLearnedApi } from "@/lib/api/revisions";
+import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import { ActiveRecallDrawer } from "@/features/revisions/active-recall-drawer";
 import { formatDisplayDate, formatDateToISO } from "@/lib/date-utils";
 import type { TaskWithDetails, Category } from "@/types";
+
+type TabType = "overview" | "history" | "logs" | "roadmap";
 
 interface TaskDetailClientProps {
   task: TaskWithDetails;
   categories: Category[];
 }
-
-type TabType = "overview" | "history" | "logs" | "roadmap";
 
 export function TaskDetailClient({ task, categories }: TaskDetailClientProps) {
   const router = useRouter();
@@ -64,7 +65,8 @@ export function TaskDetailClient({ task, categories }: TaskDetailClientProps) {
 
   const handleMarkAsLearned = async () => {
     setIsMarkingLearned(true);
-    const res = await markTopicAsLearnedAction(task.id);
+    const token = getClientAuthToken() || await ensureClientAuthToken();
+    const res = await markTopicAsLearnedApi(task.id, token || undefined);
     setIsMarkingLearned(false);
     if (res.success) {
       setIsMarkLearnedOpen(false);
@@ -108,12 +110,16 @@ export function TaskDetailClient({ task, categories }: TaskDetailClientProps) {
   const handleToggleStatus = async () => {
     try {
       setIsTogglingStatus(true);
-      const nextStatus = task.status === "PLANNED" ? "IN_PROGRESS" : "PLANNED";
-      await toggleTaskStatusAction({
-        id: task.id,
-        status: nextStatus,
-      });
-      router.refresh();
+      let token = getClientAuthToken();
+      if (!token) {
+        token = await ensureClientAuthToken();
+      }
+      if (!token) return;
+
+      const res = await toggleTaskStatusApi(task.id, token);
+      if (res.success) {
+        router.refresh();
+      }
     } catch (error) {
       console.error("Failed to toggle status:", error);
     } finally {

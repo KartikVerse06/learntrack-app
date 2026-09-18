@@ -16,7 +16,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { getCalendarEventsAction } from "@/server/actions/calendar-actions";
+import { getCalendarEventsApi } from "@/lib/api/calendar";
+import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import { EventDetailsDialog } from "./event-details-dialog";
 import type { CalendarEventDTO, CalendarEventType } from "@/lib/calendar/calendar-event-mapper";
 
@@ -47,8 +48,9 @@ export function CalendarClient({ userTimezone = "UTC" }: CalendarClientProps) {
     ) => {
       setIsLoadingEvents(true);
       try {
-        const res = await getCalendarEventsAction(fetchInfo.startStr, fetchInfo.endStr);
-        if (res.success) {
+        const token = getClientAuthToken() || await ensureClientAuthToken();
+        const res = await getCalendarEventsApi(fetchInfo.startStr, fetchInfo.endStr, token || undefined);
+        if (res.success && res.data) {
           rawEventsRef.current = res.data;
           const filtered = res.data.filter((e) => {
             if (e.extendedProps.type === "TASK" && !showTasks) return false;
@@ -58,7 +60,7 @@ export function CalendarClient({ userTimezone = "UTC" }: CalendarClientProps) {
           });
           successCallback(filtered);
         } else {
-          failureCallback(new Error(res.error.message));
+          failureCallback(new Error(res.error?.message || "Failed to load events"));
         }
       } catch (err) {
         failureCallback(err instanceof Error ? err : new Error("Failed to load events"));

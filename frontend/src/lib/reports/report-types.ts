@@ -29,6 +29,17 @@ export interface ReportDateInterval {
   rangePreset: ReportDateRangePreset;
 }
 
+export interface ReportOverviewStats {
+  learningTasks: number;
+  focusMinutes: number;
+  learningLogs: number;
+  revisionsDue: number;
+  masteredTopics: number;
+  currentStreak: number;
+  monthlyIncome: number;
+  totalTasks?: number;
+}
+
 export const reportQuerySchema = z.object({
   type: z.enum([
     "learning-progress",

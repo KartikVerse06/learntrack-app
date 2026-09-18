@@ -2,13 +2,13 @@
 
 import { useState, useTransition } from "react";
 import {
-  setMonthlyBudgetAction,
-  createExpenseAction,
-  deleteExpenseAction,
-  getMoneySummaryAction,
-  getMonthlyHistoryAction,
-  getFinancialHistoryAction,
-} from "@/server/actions/money-actions";
+  setMonthlyBudgetApi,
+  createExpenseApi,
+  deleteExpenseApi,
+  getMoneySummaryApi,
+  getFinancialHistoryApi,
+} from "@/lib/api/money";
+import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import { MoneySummaryView } from "./money-summary";
 import { MoneyAllocationView } from "./money-allocation";
 import { ExpenseList } from "./expense-list";
@@ -77,8 +77,9 @@ export function MoneyClient({
     setSelectedDate(`${year}-${mStr}-01`);
 
     startTransition(async () => {
-      const res = await getMoneySummaryAction(year, month);
-      if (res.success) {
+      const token = getClientAuthToken() || await ensureClientAuthToken();
+      const res = await getMoneySummaryApi(month, year, token || undefined);
+      if (res.success && res.data) {
         setSummary(res.data);
       }
     });
@@ -94,8 +95,9 @@ export function MoneyClient({
         setSelectedYear(y);
         setSelectedMonth(m);
         startTransition(async () => {
-          const res = await getMoneySummaryAction(y, m);
-          if (res.success) {
+          const token = getClientAuthToken() || await ensureClientAuthToken();
+          const res = await getMoneySummaryApi(m, y, token || undefined);
+          if (res.success && res.data) {
             setSummary(res.data);
           }
         });
@@ -105,13 +107,14 @@ export function MoneyClient({
 
   // Refresh data helper
   const refreshData = async (targetYear: number, targetMonth: number) => {
+    const token = getClientAuthToken() || await ensureClientAuthToken();
     const [newSummary, newFinancial] = await Promise.all([
-      getMoneySummaryAction(targetYear, targetMonth),
-      getFinancialHistoryAction(),
+      getMoneySummaryApi(targetMonth, targetYear, token || undefined),
+      getFinancialHistoryApi(token || undefined),
     ]);
 
-    if (newSummary.success) setSummary(newSummary.data);
-    if (newFinancial.success) {
+    if (newSummary.success && newSummary.data) setSummary(newSummary.data);
+    if (newFinancial.success && newFinancial.data) {
       setFinancialHistory(newFinancial.data);
       setHistory(newFinancial.data.monthlyHistory);
     }
@@ -126,11 +129,12 @@ export function MoneyClient({
     const targetYear = year ?? selectedYear;
     const targetMonth = month ?? selectedMonth;
 
-    const res = await setMonthlyBudgetAction({
+    const token = getClientAuthToken() || await ensureClientAuthToken();
+    const res = await setMonthlyBudgetApi({
       amount,
       year: targetYear,
       month: targetMonth,
-    });
+    }, token || undefined);
 
     if (res.success) {
       await refreshData(targetYear, targetMonth);
@@ -151,7 +155,8 @@ export function MoneyClient({
     date: string;
     note?: string | null;
   }) => {
-    const res = await createExpenseAction(input);
+    const token = getClientAuthToken() || await ensureClientAuthToken();
+    const res = await createExpenseApi(input, token || undefined);
 
     if (res.success) {
       await refreshData(selectedYear, selectedMonth);
@@ -166,7 +171,8 @@ export function MoneyClient({
 
   // Delete expense
   const handleDeleteExpense = async (expenseId: string) => {
-    const res = await deleteExpenseAction(expenseId);
+    const token = getClientAuthToken() || await ensureClientAuthToken();
+    const res = await deleteExpenseApi(expenseId, token || undefined);
 
     if (res.success) {
       await refreshData(selectedYear, selectedMonth);

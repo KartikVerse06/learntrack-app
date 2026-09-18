@@ -35,8 +35,8 @@ import {
   ReportType,
   ReportFormat,
   ReportDateRangePreset,
+  ReportOverviewStats,
 } from "@/lib/reports/report-types";
-import { ReportOverviewStats } from "@/server/actions/report-actions";
 
 interface ReportsClientProps {
   initialStats: ReportOverviewStats | null;

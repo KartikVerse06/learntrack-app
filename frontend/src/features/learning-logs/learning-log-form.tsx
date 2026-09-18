@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ConfidenceSelector } from "./confidence-selector";
-import { createLearningLogAction } from "@/server/actions/learning-log-actions";
+import { createLearningLogApi } from "@/lib/api/logs";
+import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import type { LearningLogWithRelations } from "@/types";
 
 interface LearningLogFormProps {
@@ -55,23 +56,33 @@ export function LearningLogForm({
     }
 
     startTransition(async () => {
-      const res = await createLearningLogAction({
-        taskId,
-        sessionId,
-        whatLearned: whatLearned.trim(),
-        whatCompleted: whatCompleted.trim() || undefined,
-        doubts: doubts.trim() || undefined,
-        notes: notes.trim() || undefined,
-        confidence,
-      });
+      let token = getClientAuthToken();
+      if (!token) token = await ensureClientAuthToken();
+      if (!token) {
+        setErrorMessage("Authentication required. Please sign in again.");
+        return;
+      }
 
-      if (res.success) {
+      const res = await createLearningLogApi(
+        {
+          taskId,
+          sessionId,
+          whatLearned: whatLearned.trim(),
+          whatCompleted: whatCompleted.trim() || undefined,
+          doubts: doubts.trim() || undefined,
+          notes: notes.trim() || undefined,
+          confidence,
+        },
+        token
+      );
+
+      if (res.success && res.data) {
         onSuccess(res.data, nextAction);
       } else {
-        if (res.error.details) {
+        if (res.error?.details) {
           setErrors(res.error.details);
         }
-        setErrorMessage(res.error.message);
+        setErrorMessage(res.error?.message || "Failed to save learning log.");
       }
     });
   };

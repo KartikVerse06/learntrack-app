@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getAnalyticsDataAction } from "@/server/actions/analytics-actions";
+import { getAnalyticsApi } from "@/lib/api/analytics";
+import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import { AnalyticsSummary } from "./analytics-summary";
 import { FocusAnalytics } from "./focus-analytics";
 import { RevisionAnalytics } from "./revision-analytics";
@@ -53,11 +54,12 @@ export function AnalyticsClient({
     setErrorMessage(null);
 
     startTransition(async () => {
-      const res = await getAnalyticsDataAction(range, userTimezone);
-      if (res.success) {
+      const token = getClientAuthToken() || await ensureClientAuthToken();
+      const res = await getAnalyticsApi(range, token || undefined);
+      if (res.success && res.data) {
         setPayload(res.data);
       } else {
-        setErrorMessage(res.error.message);
+        setErrorMessage(res.error?.message || "Failed to load analytics");
       }
     });
   };

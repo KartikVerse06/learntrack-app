@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { deleteTaskApi } from "@/lib/api/tasks";
-import { deleteTaskAction } from "@/server/actions/task-actions";
 import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import type { TaskWithCategory } from "@/types";
 
@@ -44,19 +43,17 @@ export function DeleteTaskDialog({
       if (!token) {
         token = await ensureClientAuthToken();
       }
-      if (token) {
-        const apiRes = await deleteTaskApi(task.id, token);
-        if (!apiRes.success) {
-          setError(apiRes.error?.message || "Failed to delete task.");
-          return;
-        }
-      } else {
-        const result = await deleteTaskAction(task.id);
-        if (!result.success) {
-          setError(result.error.message);
-          return;
-        }
+      if (!token) {
+        setError("Authentication required. Please sign in again.");
+        return;
       }
+
+      const apiRes = await deleteTaskApi(task.id, token);
+      if (!apiRes.success) {
+        setError(apiRes.error?.message || "Failed to delete task.");
+        return;
+      }
+
       onOpenChange(false);
       router.refresh();
       if (onSuccess) onSuccess();

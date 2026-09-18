@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { requireAuth } from "@/lib/session";
-import { getReportOverviewStatsAction } from "@/server/actions/report-actions";
+import { getReportOverviewStatsApi } from "@/lib/api/reports";
 import { ReportsClient } from "@/features/reports/reports-client";
 
 export const metadata: Metadata = {
@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default async function ReportsPage() {
-  const { user } = await requireAuth();
+  const { user, token } = await requireAuth();
 
-  const statsResult = await getReportOverviewStatsAction("30d");
+  const statsResult = await getReportOverviewStatsApi("30d", undefined, undefined, token);
   const stats = statsResult.success ? statsResult.data : null;
 
   return (
