@@ -4,7 +4,7 @@ export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === "production"
     ? "https://learntrack-app.onrender.com"
-    : "http://localhost:4000");
+    : "http://localhost:4001");
 
 export interface ApiResponse<T> {
   success: boolean;

@@ -60,8 +60,18 @@ export default function RegisterPage() {
       }
 
       setIsSuccess(true);
-      // registerApi automatically saves the session token to client cookies
-      window.location.href = "/dashboard";
+
+      // Sync token to server-side HttpOnly cookie on the Vercel domain so the
+      // Next.js middleware can read it immediately on the next request.
+      await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: result.data.token }),
+      }).catch(() => {
+        // Non-fatal: client cookie set by registerApi is the fallback.
+      });
+
+      router.push("/dashboard");
     } catch (err: any) {
       setServerError(err?.message || "An unexpected error occurred. Please try again.");
       setIsSubmitting(false);
