@@ -360,16 +360,16 @@ export function ReportsClient({ initialStats, userName, userEmail }: ReportsClie
 
         <CardFooter className="pt-2 border-t bg-muted/20 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            <span>Encrypted tenant isolation • Confidential & User-Specific</span>
+            <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
+            <span className="truncate">Encrypted tenant isolation • Confidential & User-Specific</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Button
               size="sm"
               onClick={() => handleDownload("complete", "pdf")}
               disabled={loadingState?.type === "complete"}
-              className="h-8 gap-1.5 text-xs shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+              className="h-8 gap-1.5 text-xs shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground font-medium flex-1 sm:flex-initial"
             >
               {loadingState?.type === "complete" && loadingState?.format === "pdf" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -384,7 +384,7 @@ export function ReportsClient({ initialStats, userName, userEmail }: ReportsClie
               size="sm"
               onClick={() => handleDownload("complete", "csv")}
               disabled={loadingState?.type === "complete"}
-              className="h-8 gap-1.5 text-xs shadow-sm font-medium"
+              className="h-8 gap-1.5 text-xs shadow-sm font-medium flex-1 sm:flex-initial"
             >
               {loadingState?.type === "complete" && loadingState?.format === "csv" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -399,7 +399,7 @@ export function ReportsClient({ initialStats, userName, userEmail }: ReportsClie
               size="sm"
               onClick={() => handleDownload("complete", "json")}
               disabled={loadingState?.type === "complete"}
-              className="h-8 gap-1.5 text-xs shadow-sm font-medium"
+              className="h-8 gap-1.5 text-xs shadow-sm font-medium flex-1 sm:flex-initial"
             >
               {loadingState?.type === "complete" && loadingState?.format === "json" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -423,7 +423,7 @@ export function ReportsClient({ initialStats, userName, userEmail }: ReportsClie
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {REPORT_MODULES.map((module) => {
             const Icon = module.icon;
             const isLoading = loadingState?.type === module.type;
@@ -464,11 +464,11 @@ export function ReportsClient({ initialStats, userName, userEmail }: ReportsClie
                   </div>
                 </CardContent>
 
-                <CardFooter className="pt-3 border-t bg-muted/10 flex items-center justify-between gap-2">
+                <CardFooter className="pt-3 border-t bg-muted/10 flex flex-wrap items-center justify-between gap-2">
                   <span className="text-[11px] text-muted-foreground font-medium">
                     Download:
                   </span>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <Button
                       variant="outline"
                       size="sm"

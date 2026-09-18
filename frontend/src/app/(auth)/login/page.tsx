@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -13,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { LoginSchema, type LoginInput } from "@/server/validators/auth";
 import { loginApi } from "@/lib/api/auth";
+import { getClientAuthToken } from "@/lib/api/client";
+import { LearnTrackLogo } from "@/components/common/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,23 +44,32 @@ export default function LoginPage() {
       const result = await loginApi(data);
       if (!result.success || !result.data) {
         setServerError(result.error?.message || "Invalid email or password.");
-        setIsSubmitting(false);
         return;
       }
 
-      // Sync token to server-side HttpOnly cookie on the Vercel domain so the
-      // Next.js middleware can read it immediately on the next request.
-      await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: result.data.token }),
-      }).catch(() => {
-        // Non-fatal: client cookie set by loginApi is the fallback.
-      });
+      // Sync session bridge to Next.js middleware with resilient fallback
+      try {
+        await fetch("/api/auth/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: result.data.token }),
+        });
+      } catch (bridgeErr) {
+        console.warn("Session bridge call failed, relying on client cookie token", bridgeErr);
+      }
+
+      const activeToken = getClientAuthToken();
+      if (!activeToken && !result.data.token) {
+        setServerError("Session establishment failed. Please attempt login again.");
+        return;
+      }
 
       router.push(callbackUrl);
-    } catch (err: any) {
-      setServerError(err?.message || "An unexpected error occurred. Please try again.");
+    } catch (err) {
+      setServerError(
+        err instanceof Error ? err.message : "An unexpected authentication error occurred."
+      );
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -74,15 +84,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md shadow-lg border-border/80">
         <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto relative flex h-16 w-16 items-center justify-center rounded-2xl overflow-hidden border border-border/60 bg-black/40 shadow-md">
-            <Image
-              src="/logo.png"
-              alt="LearnTrack Logo"
-              width={64}
-              height={64}
-              className="h-full w-full object-cover"
-              priority
-            />
+          <div className="flex justify-center">
+            <LearnTrackLogo variant="auth" priority />
           </div>
           <div>
             <CardTitle className="text-2xl font-bold tracking-tight">

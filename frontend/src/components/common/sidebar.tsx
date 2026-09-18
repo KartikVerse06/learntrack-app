@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,6 +13,7 @@ import {
   Wallet,
   FileText,
 } from "lucide-react";
+import { LearnTrackLogo } from "@/components/common/logo";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
@@ -34,25 +34,8 @@ export function Sidebar() {
   return (
     <aside className="hidden lg:flex w-64 flex-col border-r bg-card/60 backdrop-blur-sm select-none sticky top-0 h-screen shrink-0 z-20 overflow-y-auto">
       {/* Brand Header */}
-      <div className="flex h-16 items-center px-6 border-b gap-3 shrink-0">
-        <div className="relative flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden shrink-0 border border-border/50 bg-black/40 shadow-sm">
-          <Image
-            src="/logo.png"
-            alt="LearnTrack Logo"
-            width={40}
-            height={40}
-            className="h-full w-full object-cover"
-            priority
-          />
-        </div>
-        <div className="flex flex-col">
-          <span className="font-bold text-base tracking-tight text-foreground">
-            LearnTrack
-          </span>
-          <span className="text-[11px] font-medium text-muted-foreground">
-            Deliberate Practice
-          </span>
-        </div>
+      <div className="flex h-16 items-center px-6 border-b shrink-0">
+        <LearnTrackLogo variant="full" href="/dashboard" priority />
       </div>
 
       {/* Main Navigation */}

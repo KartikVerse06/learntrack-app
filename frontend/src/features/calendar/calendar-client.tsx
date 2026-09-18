@@ -213,6 +213,17 @@ export function CalendarClient({ userTimezone = "UTC" }: CalendarClientProps) {
           --fc-list-event-hover-bg-color: hsl(var(--muted));
           --fc-today-bg-color: hsl(var(--primary) / 0.05);
           font-family: inherit;
+          max-width: 100%;
+        }
+        .learntrack-calendar-container {
+          max-width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        @media (max-width: 639px) {
+          .learntrack-calendar-container .fc-daygrid-body {
+            min-width: 480px;
+          }
         }
         .fc .fc-toolbar {
           display: flex;

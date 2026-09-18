@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LearnTrackLogo } from "@/components/common/logo";
 
 export default function Error({
   error,
@@ -18,6 +19,9 @@ export default function Error({
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+      <div className="mb-6">
+        <LearnTrackLogo variant="auth" href="/dashboard" />
+      </div>
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400 mb-4">
         <AlertTriangle className="h-7 w-7" />
       </div>

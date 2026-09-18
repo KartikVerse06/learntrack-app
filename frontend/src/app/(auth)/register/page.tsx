@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -13,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { RegisterSchema, type RegisterInput } from "@/server/validators/auth";
 import { registerApi } from "@/lib/api/auth";
+import { getClientAuthToken } from "@/lib/api/client";
+import { LearnTrackLogo } from "@/components/common/logo";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -61,15 +62,25 @@ export default function RegisterPage() {
 
       setIsSuccess(true);
 
-      // Sync token to server-side HttpOnly cookie on the Vercel domain so the
-      // Next.js middleware can read it immediately on the next request.
-      await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: result.data.token }),
-      }).catch(() => {
-        // Non-fatal: client cookie set by registerApi is the fallback.
-      });
+      // Sync token to the server-side HttpOnly cookie on the Vercel domain so
+      // the Next.js middleware can read it on the very next server-rendered request.
+      // The client-side cookie (set by registerApi above) is a reliable fallback.
+      try {
+        await fetch("/api/auth/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: result.data.token }),
+        });
+      } catch {
+        // Bridge failed. Client-side cookie set by registerApi acts as fallback.
+      }
+
+      // Confirm a usable token is present (bridge or client cookie) before navigating.
+      if (!getClientAuthToken()) {
+        setServerError("Session could not be established. Please try signing in.");
+        setIsSubmitting(false);
+        return;
+      }
 
       router.push("/dashboard");
     } catch (err: any) {
@@ -82,15 +93,8 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md shadow-lg border-border/80">
         <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto relative flex h-16 w-16 items-center justify-center rounded-2xl overflow-hidden border border-border/60 bg-black/40 shadow-md">
-            <Image
-              src="/logo.png"
-              alt="LearnTrack Logo"
-              width={64}
-              height={64}
-              className="h-full w-full object-cover"
-              priority
-            />
+          <div className="flex justify-center">
+            <LearnTrackLogo variant="auth" priority />
           </div>
           <div>
             <CardTitle className="text-2xl font-bold tracking-tight">

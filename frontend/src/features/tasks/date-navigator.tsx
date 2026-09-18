@@ -67,7 +67,7 @@ export function DateNavigator({ currentDate }: DateNavigatorProps) {
             size="icon"
             onClick={handlePrev}
             title="Previous Day"
-            className="h-10 w-10 min-h-[40px] min-w-[40px]"
+            className="h-11 w-11 min-h-[44px] min-w-[44px]"
           >
             <ChevronLeft className="h-4 w-4" />
             <span className="sr-only">Previous Day</span>
@@ -77,7 +77,7 @@ export function DateNavigator({ currentDate }: DateNavigatorProps) {
             variant={todayActive ? "default" : "outline"}
             size="sm"
             onClick={handleToday}
-            className="h-10 min-h-[40px] px-3.5 text-xs font-semibold"
+            className="h-11 min-h-[44px] px-3.5 text-xs font-semibold"
           >
             Today
           </Button>
@@ -87,14 +87,14 @@ export function DateNavigator({ currentDate }: DateNavigatorProps) {
             size="icon"
             onClick={handleNext}
             title="Next Day"
-            className="h-10 w-10 min-h-[40px] min-w-[40px]"
+            className="h-11 w-11 min-h-[44px] min-w-[44px]"
           >
             <ChevronRight className="h-4 w-4" />
             <span className="sr-only">Next Day</span>
           </Button>
         </div>
 
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <input
             type="date"
             value={currentDate}
@@ -102,7 +102,7 @@ export function DateNavigator({ currentDate }: DateNavigatorProps) {
               if (e.target.value) handleNavigate(e.target.value);
             }}
             aria-label="Select specific date"
-            className="h-10 min-h-[40px] px-2.5 text-xs rounded-md border border-input bg-background cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring font-mono"
+            className="h-11 min-h-[44px] w-full sm:w-auto max-w-full px-2.5 text-xs rounded-md border border-input bg-background cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring font-mono"
           />
         </div>
       </div>

@@ -326,7 +326,7 @@ export function FocusClient({
               {isPaused ? "PAUSED" : "ACTIVE FOCUS"}
             </Badge>
           </div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground line-clamp-1">
+          <h1 className="text-lg xs:text-xl md:text-2xl font-bold tracking-tight text-foreground line-clamp-1">
             {task?.title || "Deliberate Practice"}
           </h1>
           <p className="text-xs text-muted-foreground">

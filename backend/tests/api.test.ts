@@ -259,4 +259,55 @@ describe("LearnTrack Backend API End-to-End Integration Suite", () => {
     expect(res.body.success).toBe(false);
     expect(res.body.error.code).toBe("UNAUTHORIZED");
   });
+
+  it("21. Invalid JWT: malformed token string should be rejected with 401", async () => {
+    const res = await request(app)
+      .get("/api/v1/tasks")
+      .set("Authorization", "Bearer this.is.not.a.valid.jwt");
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("22. Invalid JWT: token signed with wrong secret should be rejected with 401", async () => {
+    // Sign a structurally valid JWT with the wrong secret
+    const jwt = await import("jsonwebtoken");
+    const badToken = jwt.default.sign(
+      { userId: "fake-id", email: "attacker@evil.com" },
+      "wrong-secret-that-does-not-match-production-key"
+    );
+
+    const res = await request(app)
+      .get("/api/v1/tasks")
+      .set("Authorization", `Bearer ${badToken}`);
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("23. Ownership isolation (FLOW J): User B cannot read User A's task by ID", async () => {
+    // Register a second user (User B)
+    const userBEmail = `ownership-test-${Date.now()}@learntrack.local`;
+    const regB = await request(app)
+      .post("/api/v1/auth/register")
+      .send({ name: "User B", email: userBEmail, password: "Password123!" });
+
+    expect(regB.status).toBe(201);
+    const userBToken = regB.body.data.token;
+
+    // User B attempts to GET User A's task by its known ID
+    const res = await request(app)
+      .get(`/api/v1/tasks/${taskId}`)
+      .set("Authorization", `Bearer ${userBToken}`);
+
+    // Must be 404 — not 200 and not 403
+    expect(res.status).toBe(404);
+    expect(res.body.success).toBe(false);
+
+    // Cleanup User B
+    await prisma.user.deleteMany({ where: { email: userBEmail } });
+  });
 });
+

@@ -12,7 +12,7 @@ export default defineConfig({
     timeout: 10000,
   },
   use: {
-    baseURL: "http://localhost:3001",
+    baseURL: "http://localhost:3005",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
@@ -23,9 +23,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev -- -p 3001",
-    url: "http://localhost:3001",
-    reuseExistingServer: true,
+    command: "npm run dev -- -p 3005",
+    url: "http://localhost:3005",
+    reuseExistingServer: false,
     timeout: 120000,
   },
 });

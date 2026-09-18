@@ -81,7 +81,7 @@ export function ExpenseList({
                 onClick={() => handleDelete(expense.id)}
                 disabled={isDeleting}
                 aria-label={`Delete expense ${expense.note || expense.category}`}
-                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50 min-h-[32px] min-w-[32px] flex items-center justify-center"
+                className="p-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 {isDeleting ? (
                   <Loader2 className="h-4 w-4 animate-spin text-destructive" />

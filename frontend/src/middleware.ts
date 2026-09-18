@@ -6,6 +6,8 @@ export function middleware(req: NextRequest) {
   const token = cookies.get("learntrack_token")?.value || cookies.get("token")?.value;
   const isAuthenticated = !!token;
 
+  const isRootRoute = nextUrl.pathname === "/";
+
   const isAuthRoute =
     nextUrl.pathname.startsWith("/login") || nextUrl.pathname.startsWith("/register");
 
@@ -21,6 +23,15 @@ export function middleware(req: NextRequest) {
     nextUrl.pathname.startsWith("/settings") ||
     nextUrl.pathname.startsWith("/tasks") ||
     nextUrl.pathname.startsWith("/learning-logs");
+
+  // Root route: resolve auth state explicitly before redirecting.
+  // authenticated → /dashboard, unauthenticated → /login (never /dashboard blindly).
+  if (isRootRoute) {
+    if (isAuthenticated) {
+      return NextResponse.redirect(new URL("/dashboard", nextUrl));
+    }
+    return NextResponse.redirect(new URL("/login", nextUrl));
+  }
 
   if (isAuthRoute) {
     if (isAuthenticated) {
