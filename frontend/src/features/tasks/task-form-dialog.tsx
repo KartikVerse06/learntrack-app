@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { createTaskApi, updateTaskApi } from "@/lib/api/tasks";
 import { createCategoryApi } from "@/lib/api/categories";
-import { getClientAuthToken } from "@/lib/api/client";
+import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import { formatDateToISO } from "@/lib/date-utils";
 import type { TaskWithCategory, Category } from "@/types";
 
@@ -117,7 +117,10 @@ export function TaskFormDialog({
     setIsCreatingCategory(true);
     setServerError(null);
     try {
-      const token = getClientAuthToken();
+      let token = getClientAuthToken();
+      if (!token) {
+        token = await ensureClientAuthToken();
+      }
       if (!token) {
         setServerError("Authentication required. Please sign in again.");
         setIsCreatingCategory(false);
@@ -150,7 +153,10 @@ export function TaskFormDialog({
   const onSubmit = async (data: TaskFormValues) => {
     setServerError(null);
     try {
-      const token = getClientAuthToken();
+      let token = getClientAuthToken();
+      if (!token) {
+        token = await ensureClientAuthToken();
+      }
       if (!token) {
         setServerError("Authentication required. Please sign in to create or edit tasks.");
         return;

@@ -1,7 +1,7 @@
 # LearnTrack — AI Coding Agent Guidelines & Operational Protocol
 
 **Target Audience:** Autonomous AI Coding Agents, Pair Programming Assistants, Future Maintainers  
-**Mandate:** Read this entire document and referenced `/docs/` files before writing any implementation code.
+**Mandate:** Read this entire document and referenced `./docs/` files before writing any implementation code.
 
 ---
 
@@ -93,21 +93,21 @@ Before declaring any implementation task complete:
 
 When assigned an implementation task:
 1. **Step 1:** Read this `AGENTS.md` file.
-2. **Step 2:** Read the relevant domain document in `/docs/`:
-   * Requirements & Personas: [`01-product-requirements.md`](file:///d:/LearnTrack/docs/01-product-requirements.md)
-   * User Stories: [`02-user-stories.md`](file:///d:/LearnTrack/docs/02-user-stories.md)
-   * UI/UX & Screens: [`05-ui-ux-specification.md`](file:///d:/LearnTrack/docs/05-ui-ux-specification.md)
-   * Architecture: [`06-technical-architecture.md`](file:///d:/LearnTrack/docs/06-technical-architecture.md)
-   * Database Models: [`07-database-schema.md`](file:///d:/LearnTrack/docs/07-database-schema.md)
-   * API & Actions: [`08-api-specification.md`](file:///d:/LearnTrack/docs/08-api-specification.md)
-   * Focus Timer: [`09-pomodoro-focus-system.md`](file:///d:/LearnTrack/docs/09-pomodoro-focus-system.md)
-   * Revision Engine: [`10-revision-engine.md`](file:///d:/LearnTrack/docs/10-revision-engine.md)
-   * Notifications & Audio: [`11-notification-system.md`](file:///d:/LearnTrack/docs/11-notification-system.md)
-   * Analytics & Streaks: [`12-analytics-specification.md`](file:///d:/LearnTrack/docs/12-analytics-specification.md)
-   * Security Standards: [`13-security-requirements.md`](file:///d:/LearnTrack/docs/13-security-requirements.md)
-   * Testing Suite: [`14-testing-strategy.md`](file:///d:/LearnTrack/docs/14-testing-strategy.md)
-   * Phase Roadmap: [`15-development-roadmap.md`](file:///d:/LearnTrack/docs/15-development-roadmap.md)
-3. **Step 3:** Formulate an incremental implementation plan following the active phase in [`15-development-roadmap.md`](file:///d:/LearnTrack/docs/15-development-roadmap.md).
+2. **Step 2:** Read the relevant domain document in `./docs/`:
+   * Requirements & Personas: [`01-product-requirements.md`](./docs/01-product-requirements.md)
+   * User Stories: [`02-user-stories.md`](./docs/02-user-stories.md)
+   * UI/UX & Screens: [`05-ui-ux-specification.md`](./docs/05-ui-ux-specification.md)
+   * User Flows: [`03-user-flows.md`](./docs/03-user-flows.md)
+   * Architecture: [`06-technical-architecture.md`](./docs/06-technical-architecture.md)
+   * API & Actions: [`08-api-specification.md`](./docs/08-api-specification.md)
+   * Focus Timer: [`09-pomodoro-focus-system.md`](./docs/09-pomodoro-focus-system.md)
+   * Revision Engine: [`10-revision-engine.md`](./docs/10-revision-engine.md)
+   * Notifications & Audio: [`11-notification-system.md`](./docs/11-notification-system.md)
+   * Analytics & Streaks: [`12-analytics-specification.md`](./docs/12-analytics-specification.md)
+   * Security Standards: [`13-security-requirements.md`](./docs/13-security-requirements.md)
+   * Testing Suite: [`14-testing-strategy.md`](./docs/14-testing-strategy.md)
+   * Phase Roadmap: [`15-development-roadmap.md`](./docs/15-development-roadmap.md)
+3. **Step 3:** Formulate an incremental implementation plan following the active phase in [`15-development-roadmap.md`](./docs/15-development-roadmap.md).
 4. **Step 4:** Implement code adhering to the architecture.
 5. **Step 5:** Execute automated test commands to verify functionality.
 6. **Step 6:** Review git diff to confirm only intended files were modified.

@@ -1,7 +1,10 @@
 import Cookies from "js-cookie";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://learntrack-app.onrender.com"
+    : "http://localhost:4000");
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -16,16 +19,66 @@ export interface ApiResponse<T> {
 export function getClientAuthToken(): string | undefined {
   if (typeof window === "undefined") return undefined;
   const cookieToken = Cookies.get("learntrack_token") || Cookies.get("token");
-  if (cookieToken) return cookieToken;
+  if (cookieToken && cookieToken !== "undefined" && cookieToken !== "null") {
+    try {
+      if (!localStorage.getItem("learntrack_token")) {
+        localStorage.setItem("learntrack_token", cookieToken);
+      }
+    } catch {
+      // Ignore localStorage failure
+    }
+    return cookieToken;
+  }
   try {
-    return localStorage.getItem("learntrack_token") || undefined;
+    const localToken = localStorage.getItem("learntrack_token");
+    if (localToken && localToken !== "undefined" && localToken !== "null") {
+      const cookieOptions = {
+        expires: 7,
+        path: "/",
+        sameSite: "lax" as const,
+        secure: window.location.protocol === "https:",
+      };
+      Cookies.set("learntrack_token", localToken, cookieOptions);
+      Cookies.set("token", localToken, cookieOptions);
+      return localToken;
+    }
+    return undefined;
   } catch {
     return undefined;
   }
 }
 
+/**
+ * Asynchronously guarantees that the client has an auth token.
+ * If localStorage/cookies are unhydrated in the browser, fetches the verified
+ * session token from the server cookie bridge (/api/auth/session).
+ */
+export async function ensureClientAuthToken(): Promise<string | undefined> {
+  const existing = getClientAuthToken();
+  if (existing) return existing;
+  if (typeof window === "undefined") return undefined;
+
+  try {
+    const res = await fetch("/api/auth/session", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      if (data?.authenticated && data.token) {
+        setClientAuthToken(data.token);
+        return data.token;
+      }
+    }
+  } catch {
+    // Network or internal route error
+  }
+  return undefined;
+}
+
 export function setClientAuthToken(token: string): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !token) return;
   const cookieOptions = {
     expires: 7,
     path: "/",
@@ -61,7 +114,7 @@ export async function apiClient<T>(
 
   if (!authToken) {
     if (typeof window !== "undefined") {
-      authToken = getClientAuthToken();
+      authToken = getClientAuthToken() || (await ensureClientAuthToken());
     } else {
       try {
         const { cookies } = await import("next/headers");
@@ -86,6 +139,7 @@ export async function apiClient<T>(
 
   if (authToken) {
     headers["Authorization"] = `Bearer ${authToken}`;
+    headers["x-auth-token"] = authToken;
   }
 
   try {
@@ -95,8 +149,8 @@ export async function apiClient<T>(
       credentials: "include",
     });
 
-    // If 401 Unauthorized, notify/clear client token if running in browser
-    if (response.status === 401 && typeof window !== "undefined") {
+    // If 401 Unauthorized on explicit auth validation endpoint, clear client token
+    if (response.status === 401 && typeof window !== "undefined" && endpoint.includes("/auth/")) {
       removeClientAuthToken();
     }
 

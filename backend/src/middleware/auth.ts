@@ -11,12 +11,15 @@ declare global {
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
+  const xAuthToken = req.headers["x-auth-token"];
   let token: string | undefined;
 
   if (authHeader && authHeader.startsWith("Bearer ")) {
-    token = authHeader.substring(7);
-  } else if (req.cookies && req.cookies.token) {
-    token = req.cookies.token;
+    token = authHeader.substring(7).trim();
+  } else if (xAuthToken && typeof xAuthToken === "string") {
+    token = xAuthToken.trim();
+  } else if (req.cookies) {
+    token = req.cookies.token || req.cookies.learntrack_token;
   }
 
   if (!token) {

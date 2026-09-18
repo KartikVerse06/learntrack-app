@@ -23,7 +23,7 @@ const securityHeaders = [
   },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+    value: "camera=(), microphone=(), geolocation=(), browsing-topics=(), unload=()",
   },
   {
     key: "X-XSS-Protection",
@@ -41,7 +41,7 @@ const securityHeaders = [
       "img-src 'self' blob: data:",
       "font-src 'self' data: https://fonts.gstatic.com",
       "media-src 'self'",
-      "connect-src 'self' https://learntrack-app.onrender.com http://localhost:* http://127.0.0.1:*",
+      "connect-src 'self' https://learntrack-app.onrender.com https://fonts.googleapis.com https://fonts.gstatic.com http://localhost:* http://127.0.0.1:*",
       "worker-src 'self'",
       "frame-ancestors 'none'",
       "base-uri 'self'",

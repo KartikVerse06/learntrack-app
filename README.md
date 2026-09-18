@@ -68,6 +68,7 @@ LearnTrack is **not** a generic to-do list. It enforces an intentional, research
 ```
 learntrack/
 ├── backend/                     # Backend API Tier (Node.js + Express + TypeScript)
+│   ├── docs/                    # Backend architecture, schema, API & testing specs
 │   ├── prisma/                  # Prisma schema, migrations, and seed script
 │   ├── src/
 │   │   ├── config/              # Centralized environment configuration
@@ -79,9 +80,11 @@ learntrack/
 │   │   └── server.ts            # Express server bootstrap & /health endpoint
 │   ├── tests/                   # 20+ automated integration tests with supertest
 │   ├── render.yaml              # Render deployment blueprint
+│   ├── AGENTS.md                # Coding agent operational protocol for backend
 │   └── package.json
 │
 ├── frontend/                    # Frontend Web Tier (Next.js 14 App Router)
+│   ├── docs/                    # Frontend UI/UX, user flows, notification specs
 │   ├── src/
 │   │   ├── app/                 # Next.js App Router (Dashboard, Planner, Focus, etc.)
 │   │   ├── components/          # Reusable UI primitives & layout elements
@@ -90,11 +93,11 @@ learntrack/
 │   │   ├── server/actions/      # Transparent Server Action adapters
 │   │   └── types/               # View models and domain types
 │   ├── vercel.json              # Vercel deployment blueprint & security headers
+│   ├── AGENTS.md                # Coding agent operational protocol for frontend
 │   └── package.json
 │
-├── docs/                        # Complete technical and product documentation
-├── package.json                 # Monorepo root with convenience scripts
-└── README.md
+├── .gitignore                   # Production git ignore rules
+└── README.md                    # Project documentation and quickstart
 ```
 
 ---
@@ -133,16 +136,17 @@ npm run db:seed
 
 ### 4. Run Both Services Locally
 
-From the root directory:
 ```bash
 # Terminal 1: Start Backend API (Port 4000)
-npm run dev:backend
+cd backend
+npm run dev
 
-# Terminal 2: Start Frontend Web App (Port 3000)
-npm run dev:frontend
+# Terminal 2: Start Frontend Web App (Port 3001)
+cd frontend
+npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3001](http://localhost:3001) in your browser.
 * **Demo Credentials:** `demo@learntrack.app` / `Password123!`
 * **Backend Health Check:** [http://localhost:4000/health](http://localhost:4000/health)
 
@@ -151,16 +155,18 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## 🧪 Testing & Verification Commands
 
 ```bash
-# Run backend integration tests (20/20 passed)
-npm run test:backend
+# Backend Verification
+cd backend
+npm run typecheck
+npm run test
+npm run build
 
-# Run type checking on both tiers (0 errors)
-npm run typecheck:backend
-npm run typecheck:frontend
-
-# Build both tiers for production
-npm run build:backend
-npm run build:frontend
+# Frontend Verification
+cd frontend
+npm run typecheck
+npm run lint
+npm run test
+npm run build
 ```
 
 ---

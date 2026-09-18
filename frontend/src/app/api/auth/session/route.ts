@@ -1,5 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export async function GET(req: NextRequest) {
+  const token =
+    req.cookies.get("learntrack_token")?.value ||
+    req.cookies.get("token")?.value;
+
+  if (!token) {
+    return NextResponse.json(
+      { authenticated: false, token: null },
+      { status: 401 }
+    );
+  }
+
+  return NextResponse.json(
+    { authenticated: true, token },
+    { status: 200 }
+  );
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { token } = await req.json();

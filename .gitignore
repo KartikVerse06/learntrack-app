@@ -32,6 +32,7 @@ lerna-debug.log*
 
 # Environment & Secret Files (Never commit real credentials)
 .env
+.env.*
 .env*.local
 .env.development
 .env.test

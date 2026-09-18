@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { deleteTaskApi } from "@/lib/api/tasks";
 import { deleteTaskAction } from "@/server/actions/task-actions";
-import { getClientAuthToken } from "@/lib/api/client";
+import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import type { TaskWithCategory } from "@/types";
 
 interface DeleteTaskDialogProps {
@@ -40,7 +40,10 @@ export function DeleteTaskDialog({
     setError(null);
     try {
       setIsDeleting(true);
-      const token = getClientAuthToken();
+      let token = getClientAuthToken();
+      if (!token) {
+        token = await ensureClientAuthToken();
+      }
       if (token) {
         const apiRes = await deleteTaskApi(task.id, token);
         if (!apiRes.success) {

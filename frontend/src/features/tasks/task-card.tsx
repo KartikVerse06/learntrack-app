@@ -30,7 +30,7 @@ import {
   toggleTaskStatusAction,
 } from "@/server/actions/task-actions";
 import { toggleTaskStatusApi, updateTaskApi } from "@/lib/api/tasks";
-import { getClientAuthToken } from "@/lib/api/client";
+import { getClientAuthToken, ensureClientAuthToken } from "@/lib/api/client";
 import { formatDateToISO, getRelativeDateISO } from "@/lib/date-utils";
 import type { TaskWithCategory } from "@/types";
 
@@ -73,7 +73,10 @@ export function TaskCard({ task, onEdit, onDelete, onViewDetails }: TaskCardProp
     try {
       setIsMoving(true);
       const plannedDateStr = formatDateToISO(new Date(task.plannedDate));
-      const token = getClientAuthToken();
+      let token = getClientAuthToken();
+      if (!token) {
+        token = await ensureClientAuthToken();
+      }
       if (token) {
         const tomorrow = getRelativeDateISO(plannedDateStr, 1);
         await updateTaskApi(task.id, { plannedDate: tomorrow }, token);
@@ -92,7 +95,10 @@ export function TaskCard({ task, onEdit, onDelete, onViewDetails }: TaskCardProp
   const handleToggleStatus = async () => {
     try {
       setIsTogglingStatus(true);
-      const token = getClientAuthToken();
+      let token = getClientAuthToken();
+      if (!token) {
+        token = await ensureClientAuthToken();
+      }
       if (token) {
         await toggleTaskStatusApi(task.id, token);
         router.refresh();
