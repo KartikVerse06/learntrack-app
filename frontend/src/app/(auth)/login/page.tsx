@@ -64,7 +64,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(callbackUrl);
+      window.location.replace(callbackUrl);
     } catch (err) {
       setServerError(
         err instanceof Error ? err.message : "An unexpected authentication error occurred."

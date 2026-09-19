@@ -100,8 +100,12 @@ export function removeClientAuthToken(): void {
   Cookies.remove("token", { path: "/" });
   try {
     localStorage.removeItem("learntrack_token");
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("learntrack_token");
+    sessionStorage.removeItem("token");
+    sessionStorage.clear();
   } catch {
-    // Ignore localStorage failures
+    // Ignore storage failures
   }
 }
 

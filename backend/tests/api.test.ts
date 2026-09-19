@@ -309,5 +309,112 @@ describe("LearnTrack Backend API End-to-End Integration Suite", () => {
     // Cleanup User B
     await prisma.user.deleteMany({ where: { email: userBEmail } });
   });
+
+  it("24. Register duplicate email: should return 409 USER_ALREADY_EXISTS", async () => {
+    const res = await request(app)
+      .post("/api/v1/auth/register")
+      .send({
+        name: "Duplicate User",
+        email: testEmail,
+        password: "Password123!",
+      });
+
+    expect(res.status).toBe(409);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe("USER_ALREADY_EXISTS");
+  });
+
+  it("25. Register invalid email: should reject with 400 VALIDATION_ERROR", async () => {
+    const res = await request(app)
+      .post("/api/v1/auth/register")
+      .send({
+        name: "Bad Email",
+        email: "not-an-email",
+        password: "Password123!",
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("26. Register invalid password: should reject with 400 VALIDATION_ERROR", async () => {
+    const res = await request(app)
+      .post("/api/v1/auth/register")
+      .send({
+        name: "Weak Pass",
+        email: `valid-${Date.now()}@example.com`,
+        password: "short",
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("27. Login invalid password: should return 401 INVALID_CREDENTIALS", async () => {
+    const res = await request(app)
+      .post("/api/v1/auth/login")
+      .send({
+        email: testEmail,
+        password: "WrongPassword999!",
+      });
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe("INVALID_CREDENTIALS");
+  });
+
+  it("28. Login unknown email: should return 401 INVALID_CREDENTIALS", async () => {
+    const res = await request(app)
+      .post("/api/v1/auth/login")
+      .send({
+        email: `unknown-${Date.now()}@example.com`,
+        password: "Password123!",
+      });
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe("INVALID_CREDENTIALS");
+  });
+
+  it("29. Session check unauthenticated: GET /api/v1/auth/me without token should return 401", async () => {
+    const res = await request(app).get("/api/v1/auth/me");
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("30. Logout: POST /api/v1/auth/logout should clear token and learntrack_token cookies", async () => {
+    const res = await request(app).post("/api/v1/auth/logout");
+    expect(res.status).toBe(200);
+    const rawCookies = res.headers["set-cookie"];
+    const cookies: string[] = Array.isArray(rawCookies)
+      ? rawCookies
+      : typeof rawCookies === "string"
+      ? [rawCookies]
+      : [];
+    expect(cookies.some((c: string) => c.includes("token=;"))).toBe(true);
+    expect(cookies.some((c: string) => c.includes("learntrack_token=;"))).toBe(true);
+  });
+
+  it("31. Expired JWT: should be rejected with 401 UNAUTHORIZED", async () => {
+    const jwt = await import("jsonwebtoken");
+    const { config } = await import("../src/config/index.js");
+    // Generate an already-expired token
+    const expiredToken = jwt.default.sign(
+      { userId: "expired-user", email: "expired@example.com" },
+      config.authSecret,
+      { expiresIn: "-1s" }
+    );
+
+    const res = await request(app)
+      .get("/api/v1/tasks")
+      .set("Authorization", `Bearer ${expiredToken}`);
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe("UNAUTHORIZED");
+  });
 });
 

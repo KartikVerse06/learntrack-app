@@ -42,7 +42,9 @@ export async function register(req: Request, res: Response) {
   const user = await createUser({ name, email, passwordHash, timezone });
   const token = signToken({ userId: user.id, email: user.email, name: user.name });
 
-  res.cookie("token", token, getAuthCookieOptions());
+  const cookieOptions = getAuthCookieOptions();
+  res.cookie("token", token, cookieOptions);
+  res.cookie("learntrack_token", token, cookieOptions);
 
   return res.status(201).json({
     success: true,
@@ -94,7 +96,9 @@ export async function login(req: Request, res: Response) {
 
   const token = signToken({ userId: user.id, email: user.email, name: user.name });
 
-  res.cookie("token", token, getAuthCookieOptions());
+  const cookieOptions = getAuthCookieOptions();
+  res.cookie("token", token, cookieOptions);
+  res.cookie("learntrack_token", token, cookieOptions);
 
   return res.status(200).json({
     success: true,
@@ -145,12 +149,15 @@ export async function me(req: Request, res: Response) {
 
 export async function logout(req: Request, res: Response) {
   const isProduction = process.env.NODE_ENV === "production";
-  res.clearCookie("token", {
+  const clearOptions = {
     httpOnly: true,
     secure: isProduction,
     sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
     path: "/",
-  });
+  };
+
+  res.clearCookie("token", clearOptions);
+  res.clearCookie("learntrack_token", clearOptions);
 
   return res.status(200).json({
     success: true,

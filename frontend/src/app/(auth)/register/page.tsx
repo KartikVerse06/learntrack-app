@@ -10,10 +10,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { RegisterSchema, type RegisterInput } from "@/server/validators/auth";
+import { z } from "zod";
+import { RegisterSchema } from "@/server/validators/auth";
 import { registerApi } from "@/lib/api/auth";
 import { getClientAuthToken } from "@/lib/api/client";
 import { LearnTrackLogo } from "@/components/common/logo";
+
+const RegisterFormSchema = z
+  .object({
+    name: z.string().trim().min(2, "Name must be at least 2 characters.").max(100),
+    email: z.string().trim().email("Please enter a valid email address.").toLowerCase(),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters.")
+      .regex(/[A-Za-z]/, "Password must contain at least one letter.")
+      .regex(/[0-9]/, "Password must contain at least one number."),
+    confirmPassword: z.string().min(1, "Please confirm your password."),
+    timezone: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+  });
+
+type RegisterFormValues = z.infer<typeof RegisterFormSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -30,17 +50,18 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterInput>({
-    resolver: zodResolver(RegisterSchema),
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(RegisterFormSchema),
     defaultValues: {
       name: "",
       email: "",
       password: "",
+      confirmPassword: "",
       timezone: detectedTimezone || "UTC",
     },
   });
 
-  const onSubmit = async (data: RegisterInput) => {
+  const onSubmit = async (data: RegisterFormValues) => {
     setServerError(null);
     setIsSubmitting(true);
 
@@ -64,7 +85,6 @@ export default function RegisterPage() {
 
       // Sync token to the server-side HttpOnly cookie on the Vercel domain so
       // the Next.js middleware can read it on the very next server-rendered request.
-      // The client-side cookie (set by registerApi above) is a reliable fallback.
       try {
         await fetch("/api/auth/session", {
           method: "POST",
@@ -76,13 +96,13 @@ export default function RegisterPage() {
       }
 
       // Confirm a usable token is present (bridge or client cookie) before navigating.
-      if (!getClientAuthToken()) {
+      if (!getClientAuthToken() && !result.data.token) {
         setServerError("Session could not be established. Please try signing in.");
         setIsSubmitting(false);
         return;
       }
 
-      router.push("/dashboard");
+      window.location.replace("/dashboard");
     } catch (err: any) {
       setServerError(err?.message || "An unexpected error occurred. Please try again.");
       setIsSubmitting(false);
@@ -167,6 +187,21 @@ export default function RegisterPage() {
               />
               {errors.password && (
                 <p className="text-xs text-destructive">{errors.password.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Re-enter your password"
+                autoComplete="new-password"
+                disabled={isSubmitting}
+                {...register("confirmPassword")}
+              />
+              {errors.confirmPassword && (
+                <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
               )}
             </div>
 

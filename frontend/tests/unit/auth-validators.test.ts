@@ -22,6 +22,17 @@ describe("Auth Validation Schemas", () => {
       }
     });
 
+    it("should normalize email to lowercase and trim whitespace", () => {
+      const result = LoginSchema.safeParse({
+        email: "  ALEX.LEARNER@Example.COM  ",
+        password: "Password123!",
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.email).toBe("alex.learner@example.com");
+      }
+    });
+
     it("should reject empty password", () => {
       const result = LoginSchema.safeParse({
         email: "alex@example.com",
@@ -40,6 +51,19 @@ describe("Auth Validation Schemas", () => {
         timezone: "America/New_York",
       });
       expect(result.success).toBe(true);
+    });
+
+    it("should normalize email to lowercase and trim whitespace on register", () => {
+      const result = RegisterSchema.safeParse({
+        name: "  Alex Learner  ",
+        email: "  NEW.USER@Example.COM  ",
+        password: "Password123!",
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.email).toBe("new.user@example.com");
+        expect(result.data.name).toBe("Alex Learner");
+      }
     });
 
     it("should reject password shorter than 8 characters", () => {

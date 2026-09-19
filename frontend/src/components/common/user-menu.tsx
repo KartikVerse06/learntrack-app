@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { User, LogOut, Settings, Loader2, Download } from "lucide-react";
 import {
@@ -26,17 +26,19 @@ interface UserMenuProps {
 export function UserMenu({ user }: UserMenuProps) {
   const router = useRouter();
   const { isInstallable, installApp } = usePwa();
-  const [isPending, startTransition] = useTransition();
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const handleSignOut = () => {
-    startTransition(async () => {
-      try {
-        await logoutApi();
-      } catch {
-        // Handled: logoutApi cleans up client auth tokens
-      }
-      window.location.href = "/login";
-    });
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      await logoutApi();
+    } catch {
+      // Handled: logoutApi cleans up client auth tokens
+    } finally {
+      // Replace browser history so Back button does not restore authenticated UI
+      window.location.replace("/login");
+    }
   };
 
   const displayName = user?.name || "Learner";
@@ -87,10 +89,10 @@ export function UserMenu({ user }: UserMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleSignOut}
-          disabled={isPending}
+          disabled={isSigningOut}
           className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
         >
-          {isPending ? (
+          {isSigningOut ? (
             <div className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>Signing out...</span>

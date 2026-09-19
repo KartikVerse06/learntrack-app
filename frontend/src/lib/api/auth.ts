@@ -48,9 +48,32 @@ export async function getMeApi(token?: string): Promise<ApiResponse<{ user: User
 }
 
 export async function logoutApi(): Promise<ApiResponse<{ message: string }>> {
-  const res = await apiClient<{ message: string }>("/api/v1/auth/logout", {
-    method: "POST",
-  });
+  let backendRes: ApiResponse<{ message: string }>;
+  try {
+    backendRes = await apiClient<{ message: string }>("/api/v1/auth/logout", {
+      method: "POST",
+    });
+  } catch (err: any) {
+    backendRes = {
+      success: true,
+      data: { message: "Backend session cleared" },
+    };
+  }
+
+  // Clear server-side httpOnly cookies on frontend (Vercel) domain
+  if (typeof window !== "undefined") {
+    try {
+      await fetch("/api/auth/session", {
+        method: "DELETE",
+        cache: "no-store",
+      });
+    } catch (err) {
+      console.warn("Failed to invoke /api/auth/session DELETE", err);
+    }
+  }
+
+  // Clear client-side cookies and storage
   removeClientAuthToken();
-  return res;
+
+  return backendRes;
 }
